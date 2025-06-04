@@ -1,0 +1,8 @@
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_waves"> <!-- Referencia al drawable base -->
+
+    <!-- Animación para distorsionar las ondas -->
+    <target
+        android:name="wave1"
+        android:animation="@animator/wave_anim" /> <!-- Animación definida en res/animator/ -->
+</animated-vector>
