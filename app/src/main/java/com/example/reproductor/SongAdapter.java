@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.ImageButton; // ¡Importante! Importar ImageButton
 
 import androidx.annotation.NonNull;
 
@@ -30,11 +31,23 @@ public class SongAdapter extends ArrayAdapter<Song> {
     private final ArrayList<Song> songs;
     private final Bitmap defaultAlbumArt;
 
+    // --- NUEVO: Interfaz para el listener del botón de opciones ---
+    public interface OnOptionsButtonClickListener {
+        void onOptionsButtonClick(Song song);
+    }
+
+    private OnOptionsButtonClickListener onOptionsButtonClickListener;
+
     public SongAdapter(Context context, ArrayList<Song> songs) {
         super(context, 0, songs);
         this.context = context;
         this.songs = songs;
         this.defaultAlbumArt = BitmapFactory.decodeResource(context.getResources(), R.drawable.default_album_art);
+    }
+
+    // --- NUEVO: Método para establecer el listener ---
+    public void setOnOptionsButtonClickListener(OnOptionsButtonClickListener listener) {
+        this.onOptionsButtonClickListener = listener;
     }
 
     @NonNull
@@ -50,6 +63,7 @@ public class SongAdapter extends ArrayAdapter<Song> {
         TextView songArtist = convertView.findViewById(R.id.songArtist);
         TextView songDuration = convertView.findViewById(R.id.songDuration);
         ImageView albumArt = convertView.findViewById(R.id.albumArt);
+        ImageButton btnOptions = convertView.findViewById(R.id.btnOptions); // ¡NUEVO! Obtener referencia al botón
 
         if (song != null) {
             songTitle.setText(song.getTitle());
@@ -58,6 +72,13 @@ public class SongAdapter extends ArrayAdapter<Song> {
 
             // Cargar imagen del álbum
             loadAlbumArt(song, albumArt);
+
+            // --- NUEVO: Configurar el listener para el botón de opciones ---
+            btnOptions.setOnClickListener(v -> {
+                if (onOptionsButtonClickListener != null) {
+                    onOptionsButtonClickListener.onOptionsButtonClick(song); // Notificar a la MainActivity
+                }
+            });
         }
 
         return convertView;
@@ -80,7 +101,10 @@ public class SongAdapter extends ArrayAdapter<Song> {
                     @Override
                     public void onError(Exception e) {
                         // Si no hay imagen local, buscar en la web
-                        new AlbumArtSearchTask(imageView).execute(song);
+                        // Solo si no es el placeholder ya establecido por Picasso en caso de error
+                        if (!imageView.getDrawable().getConstantState().equals(context.getResources().getDrawable(R.drawable.default_album_art).getConstantState())) {
+                            new AlbumArtSearchTask(imageView).execute(song);
+                        }
                     }
                 });
     }
@@ -97,10 +121,11 @@ public class SongAdapter extends ArrayAdapter<Song> {
             Song song = songs[0];
             try {
                 // Buscar en Google Images (técnica de scraping)
+                // Advertencia: El scraping puede no ser fiable a largo plazo y puede ir contra los términos de servicio
+                // de Google. Considera usar una API si esta funcionalidad es crítica.
                 String searchUrl = "https://www.google.com/search?tbm=isch&q=" +
                         Uri.encode(song.getTitle() + " " + song.getArtist() + " album cover 500x500");
                 String html = downloadHtml(searchUrl);
-                String demoImageUrl = "https://i.ytimg.com/vi/mlBZeNKCbSI/maxresdefault.jpg" ;
                 return extractFirstImageUrl(html);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -116,12 +141,16 @@ public class SongAdapter extends ArrayAdapter<Song> {
                         .placeholder(R.drawable.default_album_art)
                         .error(R.drawable.default_album_art)
                         .into(imageView);
+            } else {
+                imageView.setImageResource(R.drawable.default_album_art); // Asegurarse de mostrar el placeholder si no se encuentra nada
             }
         }
 
         private String downloadHtml(String url) throws IOException {
             HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-            connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0"); // Simular un navegador
+            connection.setConnectTimeout(5000); // 5 segundos para conectar
+            connection.setReadTimeout(10000); // 10 segundos para leer
             InputStream inputStream = connection.getInputStream();
 
             StringBuilder html = new StringBuilder();
@@ -133,12 +162,14 @@ public class SongAdapter extends ArrayAdapter<Song> {
             }
 
             inputStream.close();
+            connection.disconnect(); // Cerrar la conexión
             return html.toString();
         }
 
         private String extractFirstImageUrl(String html) {
             // Expresión regular para encontrar URLs de imágenes en los resultados de Google
-            Pattern pattern = Pattern.compile("\"ou\":\"(https?://[^\"]+?\\.[^\"]+?)\"");
+            // Buscar URLs que estén en el formato esperado de Google Images
+            Pattern pattern = Pattern.compile("\"ou\":\"(https?://[^\"]+?\\.(?:png|jpg|jpeg|gif|bmp))\""); // Busca URLs de imagen comunes
             Matcher matcher = pattern.matcher(html);
 
             if (matcher.find()) {
@@ -149,10 +180,15 @@ public class SongAdapter extends ArrayAdapter<Song> {
     }
 
     private String formatDuration(long duration) {
-        return String.format("%02d:%02d",
-                TimeUnit.MILLISECONDS.toMinutes(duration),
-                TimeUnit.MILLISECONDS.toSeconds(duration) -
-                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(duration))
-        );
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(duration);
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(duration) -
+                TimeUnit.MINUTES.toSeconds(minutes);
+        long hours = TimeUnit.MILLISECONDS.toHours(duration);
+
+        if (hours > 0) {
+            return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+        } else {
+            return String.format("%02d:%02d", minutes, seconds);
+        }
     }
 }

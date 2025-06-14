@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Reproductor</string>
+    <string name="menu_settings">Configuración</string>
+    <string name="menu">menu</string>
+    <string name="navigation_drawer_open">abrir</string>
+    <string name="navigation_drawer_close">CERRAR</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
 </resources>

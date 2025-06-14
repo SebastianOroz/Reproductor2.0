@@ -1,93 +1,189 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/swipeRefreshLayout"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@id/controllerLayout">
+        android:layout_height="match_parent">
 
-        <ListView
-            android:id="@+id/songListView"
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/appBarLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorSurface"
+            android:elevation="8dp">
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:elevation="0dp"
+                app:contentInsetStart="0dp"
+                app:layout_scrollFlags="scroll|enterAlways|snap">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="16dp">
+
+                    <com.google.android.material.tabs.TabLayout
+                        android:id="@+id/tabLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        app:tabGravity="fill"
+                        app:tabIndicatorColor="?attr/colorPrimary"
+                        app:tabMode="scrollable"
+                        app:tabSelectedTextColor="?attr/colorPrimary"
+                        app:tabTextColor="?attr/colorOnSurface" />
+
+                    <ImageButton
+                        android:id="@+id/btnSort"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_sort"
+                        app:tint="?attr/colorOnSurface"
+                        android:contentDescription="Ordenar lista de canciones" />
+
+                </LinearLayout>
+            </androidx.appcompat.widget.Toolbar>
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefreshLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:divider="@android:color/transparent"
-            android:dividerHeight="8dp" />
+            android:layout_below="@id/appBarLayout"
+            android:layout_above="@id/songInfoLayout">
 
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+            <ListView
+                android:id="@+id/songListView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:divider="@android:color/transparent"
+                android:dividerHeight="8dp"
+                android:paddingBottom="16dp" />
 
-    <!-- Barra de progreso (SeekBar) -->
-    <SeekBar
-        android:id="@+id/songProgressBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@id/controllerLayout"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp" />
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-    <!-- Controles de reproducción (barra inferior) -->
-    <LinearLayout
-        android:id="@+id/controllerLayout"
-        android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:layout_alignParentBottom="true"
-        android:background="#E0E0E0"
-        android:orientation="vertical"
-        android:padding="8dp">
-
-        <!-- Controles principales: Shuffle, Previous, Play/Pause, Next -->
         <LinearLayout
+            android:id="@+id/songInfoLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:layout_above="@id/songProgressBar"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingVertical="8dp"
+            android:background="?attr/colorSurface" android:elevation="4dp"
+            android:visibility="gone">
 
-            <!-- Botón Shuffle -->
-            <ImageButton
-                android:id="@+id/btnShuffle"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginEnd="16dp"
-                android:src="@drawable/ic_shuffle_off" />
+            <ImageView
+                android:id="@+id/currentSongAlbumArt"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_music_placeholder"
+                android:layout_marginEnd="8dp" />
 
-            <!-- Botón Previous -->
-            <ImageButton
-                android:id="@+id/btnPrevious"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginEnd="16dp"
-                android:src="@drawable/ic_previous" />
-
-            <!-- Botón Play/Pause -->
-            <ImageButton
-                android:id="@+id/btnPlay"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:src="@drawable/ic_play" />
-
-            <!-- Botón Next -->
-            <ImageButton
-                android:id="@+id/btnNext"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="16dp"
-                android:src="@drawable/ic_next" />
+            <TextView
+                android:id="@+id/currentSongTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:singleLine="true"
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:text="No hay canción reproduciéndose"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Info de la canción actual -->
-        <TextView
-            android:id="@+id/txtSongName"
+        <SeekBar
+            android:id="@+id/songProgressBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="No hay canción seleccionada"
-            android:textAlignment="center"
-            android:textSize="14sp" />
-    </LinearLayout>
+            android:layout_above="@id/controllerLayout"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:thumb="@drawable/custom_thumb"
+            android:progressDrawable="@drawable/custom_seekbar" />
 
-</RelativeLayout>
+        <LinearLayout
+            android:id="@+id/controllerLayout"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_alignParentBottom="true"
+            android:background="?attr/colorSurface"
+            android:elevation="8dp"
+            android:orientation="vertical"
+            android:padding="8dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/btnShuffle"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_shuffle_off"
+                    app:tint="?attr/colorOnSurface" />
+
+                <ImageButton
+                    android:id="@+id/btnPrevious"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_previous"
+                    app:tint="?attr/colorOnSurface" />
+
+                <ImageButton
+                    android:id="@+id/btnPlay"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:background="@drawable/round_button"
+                    android:src="@drawable/ic_play"
+                    app:backgroundTint="?attr/colorPrimary"
+                    app:tint="?attr/colorOnPrimary" />
+
+                <ImageButton
+                    android:id="@+id/btnNext"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="16dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_next"
+                    app:tint="?attr/colorOnSurface" />
+            </LinearLayout>
+        </LinearLayout>
+    </RelativeLayout>
+
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        app:menu="@menu/drawer_menu" />
+
+</androidx.drawerlayout.widget.DrawerLayout>

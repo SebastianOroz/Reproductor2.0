@@ -1,26 +1,15 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Fondo de la SeekBar -->
     <item android:id="@android:id/background">
         <shape>
-            <solid android:color="#CCCCCC" />
-            <corners android:radius="4dp" />
+            <corners android:radius="2dp" />
+            <solid android:color="?attr/colorControlNormal" />
         </shape>
     </item>
-    <!-- Progreso secundario (buffer) -->
-    <item android:id="@android:id/secondaryProgress">
-        <clip>
-            <shape>
-                <solid android:color="#80FF5722" />
-                <corners android:radius="4dp" />
-            </shape>
-        </clip>
-    </item>
-    <!-- Progreso principal -->
     <item android:id="@android:id/progress">
         <clip>
             <shape>
-                <solid android:color="#FF5722" />
-                <corners android:radius="4dp" />
+                <corners android:radius="2dp" />
+                <solid android:color="?attr/colorPrimary" />
             </shape>
         </clip>
     </item>

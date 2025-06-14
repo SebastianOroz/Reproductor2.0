@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="?attr/colorSurface">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ordenar por:"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="?attr/colorOnSurface"
+        android:layout_marginBottom="16dp" />
+
+    <RadioGroup
+        android:id="@+id/sortRadioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <RadioButton
+            android:id="@+id/radioSortByNameAsc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Título (A-Z)"
+            android:textColor="?attr/colorOnSurface"
+            android:buttonTint="?attr/colorPrimary"
+            android:paddingVertical="8dp" />
+
+        <RadioButton
+            android:id="@+id/radioSortByNameDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Título (Z-A)"
+            android:textColor="?attr/colorOnSurface"
+            android:buttonTint="?attr/colorPrimary"
+            android:paddingVertical="8dp" />
+
+        <RadioButton
+            android:id="@+id/radioSortByArtist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Artista"
+            android:textColor="?attr/colorOnSurface"
+            android:buttonTint="?attr/colorPrimary"
+            android:paddingVertical="8dp" />
+
+        <RadioButton
+            android:id="@+id/radioSortByDurationAsc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Duración (Más corta a más larga)"
+            android:textColor="?attr/colorOnSurface"
+            android:buttonTint="?attr/colorPrimary"
+            android:paddingVertical="8dp" />
+
+        <RadioButton
+            android:id="@+id/radioSortByDurationDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Duración (Más larga a más corta)"
+            android:textColor="?attr/colorOnSurface"
+            android:buttonTint="?attr/colorPrimary"
+            android:paddingVertical="8dp" />
+
+        <RadioButton
+            android:id="@+id/radioSortByDateAddedAsc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Fecha de Adición (Antiguas a Recientes)"
+            android:textColor="?attr/colorOnSurface"
+            android:buttonTint="?attr/colorPrimary"
+            android:paddingVertical="8dp" />
+
+        <RadioButton
+            android:id="@+id/radioSortByDateAddedDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Fecha de Adición (Recientes a Antiguas)"
+            android:textColor="?attr/colorOnSurface"
+            android:buttonTint="?attr/colorPrimary"
+            android:paddingVertical="8dp" />
+
+        <RadioButton
+            android:id="@+id/radioSortByDateModifiedAsc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Fecha de Modificación (Antiguas a Recientes)"
+            android:textColor="?attr/colorOnSurface"
+            android:buttonTint="?attr/colorPrimary"
+            android:paddingVertical="8dp" />
+
+        <RadioButton
+            android:id="@+id/radioSortByDateModifiedDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Fecha de Modificación (Recientes a Antiguas)"
+            android:textColor="?attr/colorOnSurface"
+            android:buttonTint="?attr/colorPrimary"
+            android:paddingVertical="8dp" />
+
+    </RadioGroup>
+
+</LinearLayout>

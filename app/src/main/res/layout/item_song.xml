@@ -1,24 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="12dp">
-
-
-    <ImageView
-        android:id="@+id/albumArt"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginEnd="12dp"
-        android:scaleType="centerCrop"
-        android:src="@drawable/default_album_art" />
+    android:padding="12dp"
+    android:gravity="center_vertical"
+    android:background="?attr/selectableItemBackground"
+    android:descendantFocusability="blocksDescendants">  <ImageView
+    android:id="@+id/albumArt"
+    android:layout_width="48dp"
+    android:layout_height="48dp"
+    android:layout_marginEnd="12dp"
+    android:scaleType="centerCrop"
+    android:src="@drawable/default_album_art" />
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:orientation="vertical">
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginStart="0dp">
 
         <TextView
             android:id="@+id/songTitle"
@@ -26,24 +28,38 @@
             android:layout_height="wrap_content"
             android:text="Nombre de la canción"
             android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:textColor="?attr/colorOnSurface" />
 
         <TextView
             android:id="@+id/songArtist"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Artista"
-            android:textColor="#666"
-            android:textSize="14sp" />
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="14sp"
+            android:singleLine="true"
+            android:ellipsize="end" />
 
         <TextView
             android:id="@+id/songDuration"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="2dp"
             android:text="3:45"
-            android:textColor="#757575"
+            android:textColor="?attr/colorOnSurfaceVariant"
             android:textSize="12sp" />
     </LinearLayout>
 
+    <ImageButton
+        android:id="@+id/btnOptions"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_more_vert"
+        app:tint="?attr/colorOnSurfaceVariant"
+        android:contentDescription="Más opciones de canción"
+        android:layout_marginStart="8dp" />
 </LinearLayout>

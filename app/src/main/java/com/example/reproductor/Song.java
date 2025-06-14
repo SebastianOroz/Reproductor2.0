@@ -6,25 +6,50 @@ public class Song {
     private String path;
     private long duration;
     private long albumId;
-    private String album; // Nuevo campo para el nombre del álbum
+    private String album;
+    private long dateAdded;
+    private long dateModified; // NUEVO: Fecha de modificación
 
-    public Song(String title, String artist, String path, long duration, long albumId, String album) {
+    public Song(String title, String artist, String path, long duration, long albumId, String album, long dateAdded, long dateModified) {
         this.title = title;
         this.artist = artist;
         this.path = path;
         this.duration = duration;
         this.albumId = albumId;
         this.album = album;
+        this.dateAdded = dateAdded;
+        this.dateModified = dateModified; // Asignar dateModified
     }
 
-    // Añade el getter para el álbum
+    public String getTitle() {
+        return title;
+    }
+
+    public String getArtist() {
+        return artist;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public long getDuration() {
+        return duration;
+    }
+
+    public long getAlbumId() {
+        return albumId;
+    }
+
     public String getAlbum() {
         return album;
     }
 
-    public String getTitle() { return title; }
-    public String getArtist() { return artist; }
-    public String getPath() { return path; }
-    public long getDuration() { return duration; }
-    public long getAlbumId() { return albumId; }
+    public long getDateAdded() {
+        return dateAdded;
+    }
+
+    public long getDateModified() { // NUEVO: Getter para dateModified
+        return dateModified;
+    }
 }
