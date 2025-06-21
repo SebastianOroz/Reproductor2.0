@@ -16,9 +16,7 @@
         <com.google.android.material.appbar.AppBarLayout
             android:id="@+id/appBarLayout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="?attr/colorSurface"
-            android:elevation="8dp">
+            android:layout_height="wrap_content">
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
@@ -28,56 +26,42 @@
                 app:contentInsetStart="0dp"
                 app:layout_scrollFlags="scroll|enterAlways|snap">
 
-                <LinearLayout
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="16dp">
-
-                    <com.google.android.material.tabs.TabLayout
-                        android:id="@+id/tabLayout"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:layout_marginStart="8dp"
-                        app:tabGravity="fill"
-                        app:tabIndicatorColor="?attr/colorPrimary"
-                        app:tabMode="scrollable"
-                        app:tabSelectedTextColor="?attr/colorPrimary"
-                        app:tabTextColor="?attr/colorOnSurface" />
+                    android:layout_height="match_parent">
 
                     <ImageButton
                         android:id="@+id/btnSort"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:layout_width="48dp"  android:layout_height="48dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Ordenar lista de canciones"
                         android:src="@drawable/ic_sort"
+                        android:layout_marginEnd="8dp"
                         app:tint="?attr/colorOnSurface"
-                        android:contentDescription="Ordenar lista de canciones" />
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"/>
 
-                </LinearLayout>
+                    <com.google.android.material.tabs.TabLayout
+                        android:id="@+id/tabLayout"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        app:tabMode="scrollable"   app:tabGravity="fill"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/btnSort"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
             </androidx.appcompat.widget.Toolbar>
+
         </com.google.android.material.appbar.AppBarLayout>
 
-        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-            android:id="@+id/swipeRefreshLayout"
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/viewPager"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_below="@id/appBarLayout"
-            android:layout_above="@id/songInfoLayout">
-
-            <ListView
-                android:id="@+id/songListView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:clipToPadding="false"
-                android:divider="@android:color/transparent"
-                android:dividerHeight="8dp"
-                android:paddingBottom="16dp" />
-
-        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+            android:layout_above="@id/songInfoLayout"/>
 
         <LinearLayout
             android:id="@+id/songInfoLayout"
@@ -85,12 +69,14 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_above="@id/songProgressBar"
+            android:visibility="gone"
             android:gravity="center_vertical"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:paddingVertical="8dp"
-            android:background="?attr/colorSurface" android:elevation="4dp"
-            android:visibility="gone">
+            android:background="?attr/colorSurface"
+            android:elevation="4dp">
+
 
             <ImageView
                 android:id="@+id/currentSongAlbumArt"
