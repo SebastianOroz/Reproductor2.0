@@ -20,18 +20,17 @@ import java.util.List;
 public class SongsFragment extends Fragment implements SongAdapter.OnOptionsButtonClickListener, SongAdapter.OnSongSelectionListener {
 
     private ListView songListView;
-    SongAdapter adapter;
-    private OnSongInteractionListener mListener; // Listener para interactuar con MainActivity
+    protected SongAdapter adapter;
+    private OnSongInteractionListener mListener;
     private SwipeRefreshLayout swipeRefreshLayout;
 
-    // Interface para la interacción con la MainActivity
     public interface OnSongInteractionListener {
-        ArrayList<Song> getDisplayableSongList(); // Obtener la lista de canciones a mostrar
-        void onRefreshList(); // Para refrescar la lista
-        void onSongSelected(int position); // Para reproducir una canción
-        void showAddToPlaylistDialog(List<Long> songIds); // NUEVO: Mostrar diálogo de añadir a playlist
-        void showSongDetails(Song song); // NUEVO: Mostrar detalles de la canción
-        void onSelectionModeChanged(boolean inSelectionMode); // NUEVO: Notificar a MainActivity sobre el modo de selección
+        ArrayList<Song> getDisplayableSongList();
+        void onRefreshList();
+        void onSongSelected(int position);
+        void showAddToPlaylistDialog(List<Long> songIds); // ¡IMPORTANTE! Asegúrate de que acepta List<Long>
+        void showSongDetails(Song song);
+        void onSelectionModeChanged(boolean inSelectionMode);
     }
 
     @Override
@@ -52,33 +51,33 @@ public class SongsFragment extends Fragment implements SongAdapter.OnOptionsButt
         songListView = view.findViewById(R.id.songListView);
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
 
-        // Obtener la lista de canciones desde MainActivity
         ArrayList<Song> displayableSongs = mListener.getDisplayableSongList();
 
         adapter = new SongAdapter(getContext(), displayableSongs);
-        adapter.setOnOptionsButtonClickListener(this); // Asignar este fragmento como listener
-        adapter.setOnSongSelectionListener(this); // ¡NUEVO! Asignar este fragmento como listener de selección
+        adapter.setOnOptionsButtonClickListener(this);
+        adapter.setOnSongSelectionListener(this);
         songListView.setAdapter(adapter);
 
         songListView.setOnItemClickListener((parent, view1, position, id) -> {
             Song clickedSong = displayableSongs.get(position);
+            // Si estamos en modo de selección, togglea la selección.
+            // Si no, reproduce la canción.
             if (adapter.isInSelectionMode()) {
                 adapter.toggleSelection(clickedSong);
             } else {
-                mListener.onSongSelected(position); // Reproducir la canción
+                mListener.onSongSelected(position);
             }
         });
 
-        // ¡NUEVO! Manejar clic largo para activar selección múltiple
         songListView.setOnItemLongClickListener((parent, view1, position, id) -> {
+            // Al hacer clic largo, activar el modo de selección y seleccionar la canción
             if (!adapter.isInSelectionMode()) {
-                adapter.setInSelectionMode(true);
+                adapter.setInSelectionMode(true); // Esto activará la CAB en MainActivity
             }
             Song longClickedSong = displayableSongs.get(position);
-            adapter.toggleSelection(longClickedSong);
-            return true; // Consume el evento
+            adapter.toggleSelection(longClickedSong); // Selecciona/deselecciona la canción
+            return true; // Consume el evento de clic largo
         });
-
 
         swipeRefreshLayout.setOnRefreshListener(() -> mListener.onRefreshList());
 
@@ -88,7 +87,6 @@ public class SongsFragment extends Fragment implements SongAdapter.OnOptionsButt
     public void notifyAdapterChange() {
         if (adapter != null) {
             adapter.notifyDataSetChanged();
-            songListView.invalidateViews(); // Forzar redibujado
         }
     }
 
@@ -102,7 +100,6 @@ public class SongsFragment extends Fragment implements SongAdapter.OnOptionsButt
         return songListView;
     }
 
-
     public boolean isInSelectionMode() {
         return adapter != null && adapter.isInSelectionMode();
     }
@@ -110,58 +107,67 @@ public class SongsFragment extends Fragment implements SongAdapter.OnOptionsButt
     // Implementación de OnOptionsButtonClickListener
     @Override
     public void onOptionsButtonClick(Song song) {
-        // Muestra un diálogo para elegir entre ver detalles o añadir a playlist
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle(song.getTitle());
-        String[] options = {"Ver Detalles", "Añadir a Playlist"};
-        builder.setItems(options, (dialog, which) -> {
-            switch (which) {
-                case 0: // Ver Detalles
-                    mListener.showSongDetails(song);
-                    break;
-                case 1: // Añadir a Playlist
-                    // Crea una lista con una sola canción para añadir
-                    List<Long> songIds = new ArrayList<>();
-                    songIds.add(song.getId());
-                    mListener.showAddToPlaylistDialog(songIds);
-                    break;
-            }
-        });
-        builder.show();
+        // ¡MODIFICADO! Solo muestra el diálogo de opciones si NO estamos en modo de selección
+        if (!adapter.isInSelectionMode()) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+            builder.setTitle(song.getTitle());
+            String[] options = {"Ver Detalles", "Añadir a Playlist"};
+            builder.setItems(options, (dialog, which) -> {
+                switch (which) {
+                    case 0: // Ver Detalles
+                        mListener.showSongDetails(song);
+                        break;
+                    case 1: // Añadir a Playlist
+                        List<Long> songIds = new ArrayList<>();
+                        songIds.add(song.getId());
+                        mListener.showAddToPlaylistDialog(songIds); // Llama al método con una lista de 1 ID
+                        break;
+                }
+            });
+            builder.show();
+        } else {
+            // Si estamos en modo de selección, el botón de opciones individual
+            // no debería hacer nada o quizás mostrar un Toast indicando que se use la CAB.
+            Toast.makeText(getContext(), "Usa las opciones de la barra superior para selección múltiple.", Toast.LENGTH_SHORT).show();
+        }
     }
-
-
 
     // Implementación de OnSongSelectionListener
     @Override
     public void onSongSelected(Song song) {
-        // Puedes poner un Toast aquí o manejarlo en MainActivity si lo necesitas
-        // Toast.makeText(getContext(), "Seleccionado: " + song.getTitle(), Toast.LENGTH_SHORT).show();
+        // Notifica a MainActivity que la selección ha cambiado para actualizar la CAB
+        if (mListener != null && adapter.isInSelectionMode()) {
+            mListener.onSelectionModeChanged(true); // Manda true para forzar la actualización del título
+        }
     }
 
     @Override
     public void onSongDeselected(Song song) {
-        // Puedes poner un Toast aquí o manejarlo en MainActivity si lo necesitas
-        // Toast.makeText(getContext(), "Deseleccionado: " + song.getTitle(), Toast.LENGTH_SHORT).show();
+        // Notifica a MainActivity que la selección ha cambiado para actualizar la CAB
+        if (mListener != null) {
+            // Si no quedan canciones seleccionadas, el adapter ya llamará a setInSelectionMode(false)
+            // lo que a su vez llamará a onSelectionModeChanged(false) en MainActivity y cerrará la CAB.
+            // Si quedan, solo actualiza el título.
+            if (adapter.getSelectedSongIds().isEmpty()) {
+                mListener.onSelectionModeChanged(false); // Sale del modo de selección
+            } else {
+                mListener.onSelectionModeChanged(true); // Se mantiene en modo, solo actualiza el título
+            }
+        }
     }
 
     @Override
     public void onSelectionModeChanged(boolean inSelectionMode) {
-        mListener.onSelectionModeChanged(inSelectionMode); // Notifica a MainActivity
-        // Podrías mostrar/ocultar una barra de herramientas de contexto aquí
-        // Por ejemplo:
-        // if (inSelectionMode) {
-        //     Toast.makeText(getContext(), "Modo de selección activado", Toast.LENGTH_SHORT).show();
-        // } else {
-        //     Toast.makeText(getContext(), "Modo de selección desactivado", Toast.LENGTH_SHORT).show();
-        // }
+        // Esta callback la recibe MainActivity, no el propio fragmento de su propio adaptador.
+        // Aquí no necesitas hacer nada, ya que MainActivity se encarga de la CAB.
+        // Sin embargo, si quieres alguna acción visual en el fragmento (ej. un toast), puedes hacerlo.
+        mListener.onSelectionModeChanged(inSelectionMode); // Re-envía la notificación a MainActivity
     }
 
-    // Método para salir del modo de selección desde fuera (ej. un botón de "Cancelar")
     public void exitSelectionMode() {
         if (adapter != null) {
-            adapter.clearSelection();
-            // notifyDataSetChanged() se llama dentro de clearSelection
+            adapter.clearSelection(); // Esto limpia la selección y setInSelectionMode(false)
+            // La llamada a onSelectionModeChanged(false) en MainActivity cerrará la CAB
         }
     }
 

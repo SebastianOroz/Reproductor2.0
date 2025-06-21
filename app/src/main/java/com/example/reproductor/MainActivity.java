@@ -32,7 +32,10 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.ActionMode; // ¡NUEVO! Importar ActionMode
+import android.widget.EditText;
 
 import android.content.Context;
 import android.text.Editable;
@@ -55,6 +58,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.preference.PreferenceManager;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
@@ -114,6 +118,8 @@ public class MainActivity extends AppCompatActivity
     private ImageView currentSongAlbumArt;
     private TextView currentSongTitle;
 
+
+    private BottomNavigationView bottomNavigationView;
     private ArrayList<Song> allSongsList;
     private ArrayList<Song> currentDisplayList;
     private ArrayList<Song> shuffledSongList;
@@ -142,6 +148,54 @@ public class MainActivity extends AppCompatActivity
     private ImageButton btnCloseSearch;
 
 
+    private ActionMode mActionMode;
+    private ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
+        // ... (Tu implementación existente de mActionModeCallback) ...
+        @Override
+        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+            mode.getMenuInflater().inflate(R.menu.contextual_action_bar_songs, menu);
+            mode.setTitle("Seleccionadas");
+            return true;
+        }
+
+        @Override
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            SongsFragment songsFragment = getSongsFragment();
+            if (songsFragment != null) {
+                int selectedCount = songsFragment.getSelectedSongIds().size();
+                mode.setTitle(selectedCount + " seleccionadas");
+            }
+            return true;
+        }
+
+        @Override
+        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            int itemId = item.getItemId();
+            if (itemId == R.id.action_add_to_playlist_multiple) {
+                SongsFragment songsFragment = getSongsFragment();
+                if (songsFragment != null) {
+                    List<Long> selectedSongIds = songsFragment.getSelectedSongIds();
+                    if (!selectedSongIds.isEmpty()) {
+                        showAddToPlaylistDialog(selectedSongIds);
+                    } else {
+                        Toast.makeText(MainActivity.this, "No hay canciones seleccionadas.", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                mode.finish();
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public void onDestroyActionMode(ActionMode mode) {
+            mActionMode = null;
+            SongsFragment songsFragment = getSongsFragment();
+            if (songsFragment != null) {
+                songsFragment.exitSelectionMode();
+            }
+        }
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         applyAppTheme();
@@ -171,6 +225,7 @@ public class MainActivity extends AppCompatActivity
         toggle.syncState();
 
         viewPager = findViewById(R.id.viewPager);
+
         tabLayout = findViewById(R.id.tabLayout);
         customBackgroundImageView = findViewById(R.id.custom_background_image_view);
 
