@@ -11,9 +11,11 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.ImageButton; // ¡Importante! Importar ImageButton
+import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
+import androidx.preference.PreferenceManager; // ¡Importante! Añadir esta importación
+import android.content.SharedPreferences; // ¡Importante! Añadir esta importación
 
 import com.squareup.picasso.Picasso;
 
@@ -30,8 +32,9 @@ public class SongAdapter extends ArrayAdapter<Song> {
     private final Context context;
     private final ArrayList<Song> songs;
     private final Bitmap defaultAlbumArt;
+    private boolean showAlbumArtPreference; // Variable para almacenar la preferencia de mostrar carátula
 
-    // --- NUEVO: Interfaz para el listener del botón de opciones ---
+    // --- Interfaz para el listener del botón de opciones ---
     public interface OnOptionsButtonClickListener {
         void onOptionsButtonClick(Song song);
     }
@@ -43,38 +46,64 @@ public class SongAdapter extends ArrayAdapter<Song> {
         this.context = context;
         this.songs = songs;
         this.defaultAlbumArt = BitmapFactory.decodeResource(context.getResources(), R.drawable.default_album_art);
+        // Inicializar la preferencia al crear el adaptador
+        loadShowAlbumArtPreference();
     }
 
-    // --- NUEVO: Método para establecer el listener ---
+    // --- Método para establecer el listener del botón de opciones ---
     public void setOnOptionsButtonClickListener(OnOptionsButtonClickListener listener) {
         this.onOptionsButtonClickListener = listener;
+    }
+
+    // --- NUEVO: Método para cargar la preferencia de visibilidad de la carátula ---
+    private void loadShowAlbumArtPreference() {
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+        this.showAlbumArtPreference = sharedPrefs.getBoolean("pref_show_album_art", true);
+    }
+
+    // --- NUEVO: Método para actualizar la preferencia y forzar el redibujado de la lista ---
+    public void updateShowAlbumArtPreference(boolean showAlbumArt) {
+        this.showAlbumArtPreference = showAlbumArt;
+        notifyDataSetChanged(); // Notifica al adaptador que los datos han cambiado para redibujar la lista
     }
 
     @NonNull
     @Override
     public View getView(int position, View convertView, @NonNull ViewGroup parent) {
         Song song = getItem(position);
+        ViewHolder holder; // Declara el ViewHolder
 
         if (convertView == null) {
+            // Infla el layout y crea un nuevo ViewHolder si la vista no existe
             convertView = LayoutInflater.from(context).inflate(R.layout.item_song, parent, false);
+            holder = new ViewHolder();
+            holder.songTitle = convertView.findViewById(R.id.songTitle);
+            holder.songArtist = convertView.findViewById(R.id.songArtist);
+            holder.songDuration = convertView.findViewById(R.id.songDuration);
+            holder.albumArt = convertView.findViewById(R.id.albumArt);
+            holder.btnOptions = convertView.findViewById(R.id.btnOptions);
+            convertView.setTag(holder); // Almacena el ViewHolder en la vista
+        } else {
+            // Recupera el ViewHolder de la vista reciclada
+            holder = (ViewHolder) convertView.getTag();
         }
 
-        TextView songTitle = convertView.findViewById(R.id.songTitle);
-        TextView songArtist = convertView.findViewById(R.id.songArtist);
-        TextView songDuration = convertView.findViewById(R.id.songDuration);
-        ImageView albumArt = convertView.findViewById(R.id.albumArt);
-        ImageButton btnOptions = convertView.findViewById(R.id.btnOptions); // ¡NUEVO! Obtener referencia al botón
-
         if (song != null) {
-            songTitle.setText(song.getTitle());
-            songArtist.setText(song.getArtist());
-            songDuration.setText(formatDuration(song.getDuration()));
+            holder.songTitle.setText(song.getTitle());
+            holder.songArtist.setText(song.getArtist());
+            holder.songDuration.setText(formatDuration(song.getDuration()));
 
-            // Cargar imagen del álbum
-            loadAlbumArt(song, albumArt);
+            // --- Lógica para mostrar/ocultar la carátula según la preferencia ---
+            if (showAlbumArtPreference) {
+                holder.albumArt.setVisibility(View.VISIBLE); // Asegurarse de que esté visible
+                loadAlbumArt(song, holder.albumArt); // Cargar la imagen
+            } else {
+                holder.albumArt.setVisibility(View.GONE); // Ocultar el ImageView
+                holder.albumArt.setImageDrawable(null); // ¡Importante! Limpiar cualquier imagen previa
+            }
 
-            // --- NUEVO: Configurar el listener para el botón de opciones ---
-            btnOptions.setOnClickListener(v -> {
+            // Configurar el listener para el botón de opciones
+            holder.btnOptions.setOnClickListener(v -> {
                 if (onOptionsButtonClickListener != null) {
                     onOptionsButtonClickListener.onOptionsButtonClick(song); // Notificar a la MainActivity
                 }
@@ -82,6 +111,15 @@ public class SongAdapter extends ArrayAdapter<Song> {
         }
 
         return convertView;
+    }
+
+    // --- Clase ViewHolder estática para optimizar el rendimiento ---
+    static class ViewHolder {
+        TextView songTitle;
+        TextView songArtist;
+        TextView songDuration;
+        ImageView albumArt;
+        ImageButton btnOptions;
     }
 
     private void loadAlbumArt(Song song, ImageView imageView) {
@@ -100,11 +138,10 @@ public class SongAdapter extends ArrayAdapter<Song> {
 
                     @Override
                     public void onError(Exception e) {
-                        // Si no hay imagen local, buscar en la web
-                        // Solo si no es el placeholder ya establecido por Picasso en caso de error
-                        if (!imageView.getDrawable().getConstantState().equals(context.getResources().getDrawable(R.drawable.default_album_art).getConstantState())) {
-                            new AlbumArtSearchTask(imageView).execute(song);
-                        }
+                        // Si no hay imagen local, buscar en la web.
+                        // La condición `!imageView.getDrawable().getConstantState().equals(...)` ha sido eliminada
+                        // para simplificar y mejorar el manejo del reciclaje de vistas.
+                        new AlbumArtSearchTask(imageView).execute(song);
                     }
                 });
     }
@@ -150,7 +187,8 @@ public class SongAdapter extends ArrayAdapter<Song> {
             HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
             connection.setRequestProperty("User-Agent", "Mozilla/5.0"); // Simular un navegador
             connection.setConnectTimeout(5000); // 5 segundos para conectar
-            connection.setReadTimeout(10000); // 10 segundos para leer
+            connection.
+                    setReadTimeout(10000); // 10 segundos para leer
             InputStream inputStream = connection.getInputStream();
 
             StringBuilder html = new StringBuilder();

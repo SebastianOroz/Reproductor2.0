@@ -13,48 +13,49 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.google.android.material.appbar.AppBarLayout
-            android:id="@+id/appBarLayout"
+        <ImageView
+            android:id="@+id/custom_background_image_view"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"  android:background="@android:color/transparent" android:src="@null" /> <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"  android:elevation="0dp" > <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:elevation="0dp"
+        app:contentInsetStart="0dp"
+        app:layout_scrollFlags="scroll|enterAlways|snap"
+        android:background="@android:color/transparent"> <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent"> <ImageButton
+        android:id="@+id/btnSort"
+        android:layout_width="48dp"  android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Ordenar lista de canciones"
+        android:src="@drawable/ic_sort"
+        android:layout_marginEnd="8dp"
+        app:tint="?attr/colorOnSurface"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
-            <androidx.appcompat.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:elevation="0dp"
-                app:contentInsetStart="0dp"
-                app:layout_scrollFlags="scroll|enterAlways|snap">
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayout"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            app:tabMode="scrollable"   app:tabGravity="fill"
+            app:tabBackground="@android:color/transparent" app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btnSort"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+    </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.appcompat.widget.Toolbar>
 
-                    <ImageButton
-                        android:id="@+id/btnSort"
-                        android:layout_width="48dp"  android:layout_height="48dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Ordenar lista de canciones"
-                        android:src="@drawable/ic_sort"
-                        android:layout_marginEnd="8dp"
-                        app:tint="?attr/colorOnSurface"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"/>
-
-                    <com.google.android.material.tabs.TabLayout
-                        android:id="@+id/tabLayout"
-                        android:layout_width="0dp" android:layout_height="wrap_content"
-                        app:tabMode="scrollable"   app:tabGravity="fill"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toStartOf="@id/btnSort"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent" />
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
-            </androidx.appcompat.widget.Toolbar>
-
-        </com.google.android.material.appbar.AppBarLayout>
+    </com.google.android.material.appbar.AppBarLayout>
 
         <LinearLayout
             android:id="@+id/searchLayout"
@@ -63,8 +64,7 @@
             android:orientation="horizontal"
             android:layout_below="@id/appBarLayout"
             android:padding="8dp"
-            android:background="?attr/colorSurface"
-            android:elevation="4dp"
+            android:background="@android:color/transparent" android:elevation="4dp"
             android:visibility="gone"
             android:gravity="center_vertical">
 
@@ -109,44 +109,41 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_below="@id/appBarLayout"
-            android:layout_above="@id/songInfoLayout"/>
+            android:layout_above="@id/songInfoLayout"
+            android:background="@android:color/transparent" /> <LinearLayout
+        android:id="@+id/songInfoLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_above="@id/songProgressBar"
+        android:visibility="gone"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingVertical="8dp"
+        android:background="@android:color/transparent" android:elevation="4dp">
 
-        <LinearLayout
-            android:id="@+id/songInfoLayout"
-            android:layout_width="match_parent"
+        <ImageView
+            android:id="@+id/currentSongAlbumArt"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_music_placeholder"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:id="@+id/currentSongTitle"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_above="@id/songProgressBar"
-            android:visibility="gone"
-            android:gravity="center_vertical"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingVertical="8dp"
-            android:background="?attr/colorSurface"
-            android:elevation="4dp">
-
-
-            <ImageView
-                android:id="@+id/currentSongAlbumArt"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:scaleType="centerCrop"
-                android:src="@drawable/ic_music_placeholder"
-                android:layout_marginEnd="8dp" />
-
-            <TextView
-                android:id="@+id/currentSongTitle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:singleLine="true"
-                android:ellipsize="marquee"
-                android:marqueeRepeatLimit="marquee_forever"
-                android:text="No hay canción reproduciéndose"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-        </LinearLayout>
+            android:layout_weight="1"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:text="No hay canción reproduciéndose"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
         <SeekBar
             android:id="@+id/songProgressBar"
@@ -163,8 +160,7 @@
             android:layout_width="match_parent"
             android:layout_height="80dp"
             android:layout_alignParentBottom="true"
-            android:background="?attr/colorSurface"
-            android:elevation="8dp"
+            android:background="@android:color/transparent" android:elevation="8dp"
             android:orientation="vertical"
             android:padding="8dp">
 
@@ -218,6 +214,5 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        app:menu="@menu/drawer_menu" />
-
-</androidx.drawerlayout.widget.DrawerLayout>
+        app:menu="@menu/drawer_menu"
+        android:background="?attr/colorSurface" /> </androidx.drawerlayout.widget.DrawerLayout>

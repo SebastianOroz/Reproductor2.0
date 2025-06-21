@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory android:title="Reproducción">
-        <SwitchPreferenceCompat
-            android:key="pref_autoplay_next"
-            android:title="Reproducir siguiente automáticamente"
-            android:summary="Reproducir la siguiente canción al finalizar la actual"
-            android:defaultValue="true" />
-    </PreferenceCategory>
+
 
     <PreferenceCategory android:title="Interfaz">
         <SwitchPreferenceCompat
@@ -36,7 +30,7 @@
         <Preference
             android:key="pref_about"
             android:title="Acerca de"
-            android:summary="Información sobre la aplicación" />
+            android:summary="Sebastian Orozco Orejuela" />
     </PreferenceCategory>
 
 </PreferenceScreen>

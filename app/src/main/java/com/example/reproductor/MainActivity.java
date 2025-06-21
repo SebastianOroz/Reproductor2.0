@@ -3,6 +3,7 @@ package com.example.reproductor;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.ContentUris;
+import android.widget.ImageView;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -106,6 +107,10 @@ public class MainActivity extends AppCompatActivity
     private boolean isShuffleOn = false;
     private Random random = new Random();
 
+
+
+    private ImageView customBackgroundImageView;
+
     private static final String SORT_ORDER_NAME_ASC = "name_asc";
     private static final String SORT_ORDER_NAME_DESC = "name_desc";
     private static final String SORT_ORDER_ARTIST = "artist";
@@ -130,7 +135,8 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        loadCustomBackground();
+
+//Inicializar
 
         allSongsList = new ArrayList<>();
         currentDisplayList = new ArrayList<>();
@@ -148,14 +154,15 @@ public class MainActivity extends AppCompatActivity
 
         viewPager = findViewById(R.id.viewPager);
         tabLayout = findViewById(R.id.tabLayout);
+        customBackgroundImageView = findViewById(R.id.custom_background_image_view);
 
 
-        // Se configura el adaptador de pestañas
+
         TabsPagerAdapter tabsAdapter = new TabsPagerAdapter(this);
         viewPager.setAdapter(tabsAdapter);
 
 
-        // Se conectan las pestañas con el ViewPager y se establecen los títulos
+
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
             switch (position) {
                 case 0:
@@ -167,7 +174,7 @@ public class MainActivity extends AppCompatActivity
                 case 2:
                     tab.setText("Playlists");
                     break;
-                case 3: // Pestaña de YouTube
+                case 3:
                     tab.setText("YouTube");
                     break;
             }
@@ -192,33 +199,33 @@ public class MainActivity extends AppCompatActivity
         checkStoragePermission();
     }
 
-
+//metodos
     private void setupSearchControls() {
-        // Listener para detectar cambios en el texto de búsqueda
+
         searchEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // No se necesita ninguna acción antes de que el texto cambie
+
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // Filtra las canciones en tiempo real a medida que el usuario escribe
+
                 filterSongs(s.toString());
-                // Muestra u oculta el botón de limpiar según si hay texto o no
+
                 btnClearSearch.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
             }
 
             @Override
             public void afterTextChanged(Editable s) {
-                // No se necesita ninguna acción después de que el texto cambie
+
             }
         });
 
-        // Listener para el botón de limpiar búsqueda
+
         btnClearSearch.setOnClickListener(v -> searchEditText.setText(""));
 
-        // Listener para el botón de cerrar búsqueda
+
         btnCloseSearch.setOnClickListener(v -> closeSearch());
     }
     private void setupPlayerControls() {
@@ -273,12 +280,12 @@ public class MainActivity extends AppCompatActivity
 
 
     private void filterSongs(String query) {
-        currentDisplayList.clear(); // Limpia la lista actual de visualización
+        currentDisplayList.clear();
         if (query.isEmpty()) {
-            // Si la consulta está vacía, muestra todas las canciones
+
             currentDisplayList.addAll(allSongsList);
         } else {
-            // Si hay una consulta, filtra las canciones por título, artista o álbum
+
             String lowerCaseQuery = query.toLowerCase();
             for (Song song : allSongsList) {
                 if (song.getTitle().toLowerCase().contains(lowerCaseQuery) ||
@@ -288,8 +295,8 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         }
-        sortSongList(); // Vuelve a ordenar la lista filtrada
-        notifySongsFragmentAdapterChanged(); // Notifica al adaptador del fragmento de canciones que los datos han cambiado
+        sortSongList();
+        notifySongsFragmentAdapterChanged();
     }
 
     @Override
@@ -378,6 +385,8 @@ public class MainActivity extends AppCompatActivity
         ArrayList<Song> activeList = isShuffleOn ? shuffledSongList : currentDisplayList;
         if (activeList.isEmpty()) return;
 
+
+
         currentSongIndex = position;
         if (currentSongIndex < 0 || currentSongIndex >= activeList.size()) {
             currentSongIndex = 0;
@@ -444,8 +453,11 @@ public class MainActivity extends AppCompatActivity
         isShuffleOn = !isShuffleOn;
         if (isShuffleOn) {
             createShuffledList();
+
+
         }
         updateShuffleButtonIcon();
+
     }
 
 
@@ -454,7 +466,7 @@ public class MainActivity extends AppCompatActivity
 
     private void applyAppTheme() {
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean isDarkModeEnabled = sharedPrefs.getBoolean("pref_dark_mode", false); // "false" es el valor por defecto si no se ha guardado
+        boolean isDarkModeEnabled = sharedPrefs.getBoolean("pref_dark_mode", false);
 
         if (isDarkModeEnabled) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
@@ -468,50 +480,15 @@ public class MainActivity extends AppCompatActivity
         String backgroundUrl = sharedPrefs.getString("pref_background_url", null);
 
         if (backgroundUrl != null && !backgroundUrl.isEmpty()) {
-            // Usamos Picasso para cargar la imagen. Picasso puede cargar directamente en un Target
-            // que nos da el Bitmap, luego creamos un BitmapDrawable compatible.
             Picasso.get()
                     .load(backgroundUrl)
-                    .into(new Target() {
-                        @Override
-                        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                            // Crear un nuevo BitmapDrawable compatible con todas las APIs
-                            customBackgroundDrawable = new BitmapDrawable(getResources(), bitmap);
 
-                            // Opcional: Aplicar el modo de escalado si es necesario.
-                            // El `gravity="centerCrop"` en un `BitmapDrawable` XML es equivalente a:
-                            // ((BitmapDrawable) customBackgroundDrawable).setGravity(Gravity.CENTER_CROP);
-                            // Asegúrate de importar android.view.Gravity si usas esto.
-
-                            // Establecer el nuevo Drawable como fondo de la ventana
-                            getWindow().setBackgroundDrawable(customBackgroundDrawable);
-
-                            // Si tienes un ImageView para previsualizar, también puedes actualizarlo
-                            // ImageView fondoPreview = findViewById(R.id.fondo_preview_id);
-                            // if (fondoPreview != null) {
-                            //     fondoPreview.setImageDrawable(customBackgroundDrawable);
-                            // }
-                        }
-
-                        @Override
-                        public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-                            Log.e("Picasso", "Error al cargar la imagen de fondo: " + e.getMessage());
-                            // Si falla, revertir a un fondo por defecto o eliminar el fondo personalizado
-                            customBackgroundDrawable = null;
-                            getWindow().setBackgroundDrawable(null); // O un Drawable por defecto: getWindow().setBackgroundDrawableResource(R.drawable.default_background);
-                            Toast.makeText(MainActivity.this, "Error al cargar el fondo. URL inválida o inaccesible.", Toast.LENGTH_LONG).show();
-                        }
-
-                        @Override
-                        public void onPrepareLoad(Drawable placeHolderDrawable) {
-                            // Opcional: Mostrar un placeholder mientras la imagen se carga
-                            // getWindow().setBackgroundDrawable(placeHolderDrawable);
-                        }
-                    });
+                    .placeholder(android.R.color.transparent)
+                    .error(android.R.color.transparent)
+                    .into(customBackgroundImageView);
         } else {
-            // Si la URL es nula o vacía, eliminar cualquier fondo personalizado
-            customBackgroundDrawable = null;
-            getWindow().setBackgroundDrawable(null); // O volver al fondo por defecto del tema
+
+            customBackgroundImageView.setImageDrawable(null);
         }
     }
 
@@ -579,7 +556,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private SongsFragment getSongsFragment() {
-        // El tag "f0" es asignado por el FragmentStateAdapter por defecto para la posición 0
+
         return (SongsFragment) getSupportFragmentManager().findFragmentByTag("f0");
     }
 
@@ -594,11 +571,10 @@ public class MainActivity extends AppCompatActivity
     public void onBackPressed() {
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
             drawerLayout.closeDrawer(GravityCompat.START);
-        } else if (viewPager.getCurrentItem() == 3) { // Si estamos en la pestaña de YouTube
-            // El tag "f3" es para la posición 3
+        } else if (viewPager.getCurrentItem() == 3) {
             YouTubeFragment fragment = (YouTubeFragment) getSupportFragmentManager().findFragmentByTag("f3");
             if (fragment != null && fragment.canGoBack()) {
-                fragment.goBack(); // Permite que el fragmento maneje el botón de atrás (para ocultar el WebView)
+                fragment.goBack();
             } else {
                 super.onBackPressed();
             }
@@ -609,11 +585,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        loadCustomBackground();
-    }
+
 
     @Override
     protected void onDestroy() {
@@ -636,7 +608,7 @@ public class MainActivity extends AppCompatActivity
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
         }
-        drawerLayout.closeDrawer(GravityCompat.START); // Cierra el drawer después de la selección
+        drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
 
@@ -646,44 +618,43 @@ public class MainActivity extends AppCompatActivity
 
 
     private void openSearch() {
-        searchLayout.setVisibility(View.VISIBLE); // Hacer visible la barra de búsqueda
-        searchEditText.setText(""); // Limpiar cualquier texto de búsqueda anterior
-        searchEditText.requestFocus(); // Enfocar el campo de texto
-        // Mostrar el teclado virtual
+        searchLayout.setVisibility(View.VISIBLE);
+        searchEditText.setText("");
+        searchEditText.requestFocus();
+
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.showSoftInput(searchEditText, InputMethodManager.SHOW_IMPLICIT);
 
-        // Ajustar el diseño del ViewPager para que esté debajo de la barra de búsqueda
+
         RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) viewPager.getLayoutParams();
         params.addRule(RelativeLayout.BELOW, R.id.searchLayout);
         viewPager.setLayoutParams(params);
 
-        // Ocultar la barra de pestañas y el botón de ordenación durante la búsqueda
+
         tabLayout.setVisibility(View.GONE);
         btnSort.setVisibility(View.GONE);
-        toolbar.setTitle("Búsqueda"); // Cambiar el título de la toolbar a "Búsqueda"
+        toolbar.setTitle("Búsqueda");
     }
 
 
     private void closeSearch() {
-        searchLayout.setVisibility(View.GONE); // Ocultar la barra de búsqueda
-        searchEditText.setText(""); // Limpiar el texto de búsqueda
-        filterSongs(""); // Mostrar todas las canciones de nuevo
+        searchLayout.setVisibility(View.GONE);
+        searchEditText.setText("");
+        filterSongs("");
 
-        // Ocultar el teclado virtual
+
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(searchEditText.getWindowToken(), 0);
 
-        // Revertir el diseño del ViewPager para que esté debajo del AppBarLayout
+
         RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) viewPager.getLayoutParams();
-        params.removeRule(RelativeLayout.BELOW); // Eliminar la regla anterior
-        params.addRule(RelativeLayout.BELOW, R.id.appBarLayout); // Añadir la regla original
+        params.removeRule(RelativeLayout.BELOW);
+        params.addRule(RelativeLayout.BELOW, R.id.appBarLayout);
         viewPager.setLayoutParams(params);
 
-        // Mostrar la barra de pestañas y el botón de ordenación de nuevo
         tabLayout.setVisibility(View.VISIBLE);
         btnSort.setVisibility(View.VISIBLE);
-        toolbar.setTitle("Reproductor"); // Restaurar el título original de la toolbar
+        toolbar.setTitle("Reproductor");
     }
 
 
@@ -709,17 +680,48 @@ public class MainActivity extends AppCompatActivity
         RadioGroup sortRadioGroup = popupView.findViewById(R.id.sortRadioGroup);
         if (SORT_ORDER_NAME_ASC.equals(currentSortOrder)) {
             ((RadioButton) popupView.findViewById(R.id.radioSortByNameAsc)).setChecked(true);
-        } else {
+        } else if (SORT_ORDER_NAME_DESC.equals(currentSortOrder)) {
             ((RadioButton) popupView.findViewById(R.id.radioSortByNameDesc)).setChecked(true);
+        } else if (SORT_ORDER_ARTIST.equals(currentSortOrder)) {
+            ((RadioButton) popupView.findViewById(R.id.radioSortByArtist)).setChecked(true);
+        } else if (SORT_ORDER_DURATION_ASC.equals(currentSortOrder)) {
+            ((RadioButton) popupView.findViewById(R.id.radioSortByDurationAsc)).setChecked(true);
+        } else if (SORT_ORDER_DURATION_DESC.equals(currentSortOrder)) {
+            ((RadioButton) popupView.findViewById(R.id.radioSortByDurationDesc)).setChecked(true);
+        } else if (SORT_ORDER_DATE_ADDED_ASC.equals(currentSortOrder)) {
+            ((RadioButton) popupView.findViewById(R.id.radioSortByDateAddedAsc)).setChecked(true);
+        } else if (SORT_ORDER_DATE_ADDED_DESC.equals(currentSortOrder)) {
+            ((RadioButton) popupView.findViewById(R.id.radioSortByDateAddedDesc)).setChecked(true);
+        } else if (SORT_ORDER_DATE_MODIFIED_ASC.equals(currentSortOrder)) {
+            ((RadioButton) popupView.findViewById(R.id.radioSortByDateModifiedAsc)).setChecked(true);
+        } else if (SORT_ORDER_DATE_MODIFIED_DESC.equals(currentSortOrder)) {
+            ((RadioButton) popupView.findViewById(R.id.radioSortByDateModifiedDesc)).setChecked(true);
         }
+
 
         sortRadioGroup.setOnCheckedChangeListener((group, checkedId) -> {
             String newSortOrder = currentSortOrder;
+
             if (checkedId == R.id.radioSortByNameAsc) {
                 newSortOrder = SORT_ORDER_NAME_ASC;
             } else if (checkedId == R.id.radioSortByNameDesc) {
                 newSortOrder = SORT_ORDER_NAME_DESC;
+            } else if (checkedId == R.id.radioSortByArtist) {
+                newSortOrder = SORT_ORDER_ARTIST;
+            } else if (checkedId == R.id.radioSortByDurationAsc) {
+                newSortOrder = SORT_ORDER_DURATION_ASC;
+            } else if (checkedId == R.id.radioSortByDurationDesc) {
+                newSortOrder = SORT_ORDER_DURATION_DESC;
+            } else if (checkedId == R.id.radioSortByDateAddedAsc) {
+                newSortOrder = SORT_ORDER_DATE_ADDED_ASC;
+            } else if (checkedId == R.id.radioSortByDateAddedDesc) {
+                newSortOrder = SORT_ORDER_DATE_ADDED_DESC;
+            } else if (checkedId == R.id.radioSortByDateModifiedAsc) {
+                newSortOrder = SORT_ORDER_DATE_MODIFIED_ASC;
+            } else if (checkedId == R.id.radioSortByDateModifiedDesc) {
+                newSortOrder = SORT_ORDER_DATE_MODIFIED_DESC;
             }
+
             if (!newSortOrder.equals(currentSortOrder)) {
                 currentSortOrder = newSortOrder;
                 sortSongList();
@@ -771,8 +773,17 @@ public class MainActivity extends AppCompatActivity
     private void updateShuffleButtonIcon() {
         if (isShuffleOn) {
             btnShuffle.setImageResource(R.drawable.ic_shuffle_on);
+            Toast.makeText(this, "Modo aleatorio activado", Toast.LENGTH_SHORT).show();
         } else {
             btnShuffle.setImageResource(R.drawable.ic_shuffle_off);
+            Toast.makeText(this, "Modo aleatorio desactivado", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        loadCustomBackground();
     }
 }
