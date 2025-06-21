@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+
+    <PreferenceCategory android:title="Interfaz">
+
+
+        <EditTextPreference
+            android:key="pref_background_url"
+            android:title="URL de Fondo Personalizado"
+            android:summary="Introduce una URL para usar como fondo de la aplicación"
+            android:dialogTitle="Introduce la URL de la imagen"
+            android:hint="URL de la imagen" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Información">
+        <Preference
+            android:key="pref_version"
+            android:title="Versión de la Aplicación"
+            android:summary="1.0.0"
+            android:selectable="false" />
+
+        <Preference
+            android:key="pref_about"
+            android:title="Acerca de"
+            android:summary="Información sobre la aplicación" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

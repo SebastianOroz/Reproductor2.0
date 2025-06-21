@@ -3,6 +3,7 @@ package com.example.reproductor;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.ContentUris;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -456,7 +457,8 @@ public class MainActivity extends AppCompatActivity
             // Lógica para el botón de búsqueda (por ahora, solo un Toast)
             Toast.makeText(this, "Abrir búsqueda", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_settings) {
-            // Lógica para el botón de configuración (ya lo tenías)
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
             Toast.makeText(this, "Abrir configuración", Toast.LENGTH_SHORT).show();
         }
         drawerLayout.closeDrawer(GravityCompat.START); // Cierra el drawer después de la selección
