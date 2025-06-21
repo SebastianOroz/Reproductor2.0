@@ -3,6 +3,8 @@ package com.example.reproductor;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.ContentUris;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -22,22 +24,52 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
+
+import android.content.Context;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+
+
+
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.preference.PreferenceManager;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
+
+
+
+
+
+import android.content.SharedPreferences;
+import androidx.preference.PreferenceManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.widget.ImageView;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
+import com.squareup.picasso.Callback;
+import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,6 +88,8 @@ public class MainActivity extends AppCompatActivity
     private Toolbar toolbar;
     private ViewPager2 viewPager;
     private TabLayout tabLayout;
+
+    private Drawable customBackgroundDrawable;
 
     private MediaPlayer mediaPlayer;
     private int currentSongIndex = -1;
@@ -84,11 +118,19 @@ public class MainActivity extends AppCompatActivity
 
     private String currentSortOrder = SORT_ORDER_NAME_ASC;
 
+    private LinearLayout searchLayout;
+    private EditText searchEditText;
+    private ImageButton btnClearSearch;
+    private ImageButton btnCloseSearch;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        applyAppTheme();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        loadCustomBackground();
 
         allSongsList = new ArrayList<>();
         currentDisplayList = new ArrayList<>();
@@ -140,11 +182,45 @@ public class MainActivity extends AppCompatActivity
         songInfoLayout = findViewById(R.id.songInfoLayout);
         currentSongAlbumArt = findViewById(R.id.currentSongAlbumArt);
         currentSongTitle = findViewById(R.id.currentSongTitle);
+        searchLayout = findViewById(R.id.searchLayout);
+        searchEditText = findViewById(R.id.searchEditText);
+        btnClearSearch = findViewById(R.id.btnClearSearch);
+        btnCloseSearch = findViewById(R.id.btnCloseSearch);
 
         setupPlayerControls();
+        setupSearchControls();
         checkStoragePermission();
     }
 
+
+    private void setupSearchControls() {
+        // Listener para detectar cambios en el texto de búsqueda
+        searchEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // No se necesita ninguna acción antes de que el texto cambie
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // Filtra las canciones en tiempo real a medida que el usuario escribe
+                filterSongs(s.toString());
+                // Muestra u oculta el botón de limpiar según si hay texto o no
+                btnClearSearch.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // No se necesita ninguna acción después de que el texto cambie
+            }
+        });
+
+        // Listener para el botón de limpiar búsqueda
+        btnClearSearch.setOnClickListener(v -> searchEditText.setText(""));
+
+        // Listener para el botón de cerrar búsqueda
+        btnCloseSearch.setOnClickListener(v -> closeSearch());
+    }
     private void setupPlayerControls() {
         btnPlay.setOnClickListener(v -> {
             if (mediaPlayer != null) {
@@ -189,6 +265,31 @@ public class MainActivity extends AppCompatActivity
         } else {
             loadSongs();
         }
+    }
+
+
+
+
+
+
+    private void filterSongs(String query) {
+        currentDisplayList.clear(); // Limpia la lista actual de visualización
+        if (query.isEmpty()) {
+            // Si la consulta está vacía, muestra todas las canciones
+            currentDisplayList.addAll(allSongsList);
+        } else {
+            // Si hay una consulta, filtra las canciones por título, artista o álbum
+            String lowerCaseQuery = query.toLowerCase();
+            for (Song song : allSongsList) {
+                if (song.getTitle().toLowerCase().contains(lowerCaseQuery) ||
+                        (song.getArtist() != null && song.getArtist().toLowerCase().contains(lowerCaseQuery)) ||
+                        (song.getAlbum() != null && song.getAlbum().toLowerCase().contains(lowerCaseQuery))) {
+                    currentDisplayList.add(song);
+                }
+            }
+        }
+        sortSongList(); // Vuelve a ordenar la lista filtrada
+        notifySongsFragmentAdapterChanged(); // Notifica al adaptador del fragmento de canciones que los datos han cambiado
     }
 
     @Override
@@ -347,6 +448,77 @@ public class MainActivity extends AppCompatActivity
         updateShuffleButtonIcon();
     }
 
+
+
+//Configuraciones
+
+    private void applyAppTheme() {
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isDarkModeEnabled = sharedPrefs.getBoolean("pref_dark_mode", false); // "false" es el valor por defecto si no se ha guardado
+
+        if (isDarkModeEnabled) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        }
+    }
+
+    private void loadCustomBackground() {
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String backgroundUrl = sharedPrefs.getString("pref_background_url", null);
+
+        if (backgroundUrl != null && !backgroundUrl.isEmpty()) {
+            // Usamos Picasso para cargar la imagen. Picasso puede cargar directamente en un Target
+            // que nos da el Bitmap, luego creamos un BitmapDrawable compatible.
+            Picasso.get()
+                    .load(backgroundUrl)
+                    .into(new Target() {
+                        @Override
+                        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                            // Crear un nuevo BitmapDrawable compatible con todas las APIs
+                            customBackgroundDrawable = new BitmapDrawable(getResources(), bitmap);
+
+                            // Opcional: Aplicar el modo de escalado si es necesario.
+                            // El `gravity="centerCrop"` en un `BitmapDrawable` XML es equivalente a:
+                            // ((BitmapDrawable) customBackgroundDrawable).setGravity(Gravity.CENTER_CROP);
+                            // Asegúrate de importar android.view.Gravity si usas esto.
+
+                            // Establecer el nuevo Drawable como fondo de la ventana
+                            getWindow().setBackgroundDrawable(customBackgroundDrawable);
+
+                            // Si tienes un ImageView para previsualizar, también puedes actualizarlo
+                            // ImageView fondoPreview = findViewById(R.id.fondo_preview_id);
+                            // if (fondoPreview != null) {
+                            //     fondoPreview.setImageDrawable(customBackgroundDrawable);
+                            // }
+                        }
+
+                        @Override
+                        public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+                            Log.e("Picasso", "Error al cargar la imagen de fondo: " + e.getMessage());
+                            // Si falla, revertir a un fondo por defecto o eliminar el fondo personalizado
+                            customBackgroundDrawable = null;
+                            getWindow().setBackgroundDrawable(null); // O un Drawable por defecto: getWindow().setBackgroundDrawableResource(R.drawable.default_background);
+                            Toast.makeText(MainActivity.this, "Error al cargar el fondo. URL inválida o inaccesible.", Toast.LENGTH_LONG).show();
+                        }
+
+                        @Override
+                        public void onPrepareLoad(Drawable placeHolderDrawable) {
+                            // Opcional: Mostrar un placeholder mientras la imagen se carga
+                            // getWindow().setBackgroundDrawable(placeHolderDrawable);
+                        }
+                    });
+        } else {
+            // Si la URL es nula o vacía, eliminar cualquier fondo personalizado
+            customBackgroundDrawable = null;
+            getWindow().setBackgroundDrawable(null); // O volver al fondo por defecto del tema
+        }
+    }
+
+
+
+
+
     private void createShuffledList() {
         shuffledSongList.clear();
         shuffledSongList.addAll(currentDisplayList);
@@ -437,6 +609,11 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadCustomBackground();
+    }
 
     @Override
     protected void onDestroy() {
@@ -453,15 +630,63 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_search) {
-            // Lógica para el botón de búsqueda (por ahora, solo un Toast)
+            openSearch();
             Toast.makeText(this, "Abrir búsqueda", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_settings) {
-            // Lógica para el botón de configuración (ya lo tenías)
-            Toast.makeText(this, "Abrir configuración", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
         }
         drawerLayout.closeDrawer(GravityCompat.START); // Cierra el drawer después de la selección
         return true;
     }
+
+
+
+
+
+
+    private void openSearch() {
+        searchLayout.setVisibility(View.VISIBLE); // Hacer visible la barra de búsqueda
+        searchEditText.setText(""); // Limpiar cualquier texto de búsqueda anterior
+        searchEditText.requestFocus(); // Enfocar el campo de texto
+        // Mostrar el teclado virtual
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.showSoftInput(searchEditText, InputMethodManager.SHOW_IMPLICIT);
+
+        // Ajustar el diseño del ViewPager para que esté debajo de la barra de búsqueda
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) viewPager.getLayoutParams();
+        params.addRule(RelativeLayout.BELOW, R.id.searchLayout);
+        viewPager.setLayoutParams(params);
+
+        // Ocultar la barra de pestañas y el botón de ordenación durante la búsqueda
+        tabLayout.setVisibility(View.GONE);
+        btnSort.setVisibility(View.GONE);
+        toolbar.setTitle("Búsqueda"); // Cambiar el título de la toolbar a "Búsqueda"
+    }
+
+
+    private void closeSearch() {
+        searchLayout.setVisibility(View.GONE); // Ocultar la barra de búsqueda
+        searchEditText.setText(""); // Limpiar el texto de búsqueda
+        filterSongs(""); // Mostrar todas las canciones de nuevo
+
+        // Ocultar el teclado virtual
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(searchEditText.getWindowToken(), 0);
+
+        // Revertir el diseño del ViewPager para que esté debajo del AppBarLayout
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) viewPager.getLayoutParams();
+        params.removeRule(RelativeLayout.BELOW); // Eliminar la regla anterior
+        params.addRule(RelativeLayout.BELOW, R.id.appBarLayout); // Añadir la regla original
+        viewPager.setLayoutParams(params);
+
+        // Mostrar la barra de pestañas y el botón de ordenación de nuevo
+        tabLayout.setVisibility(View.VISIBLE);
+        btnSort.setVisibility(View.VISIBLE);
+        toolbar.setTitle("Reproductor"); // Restaurar el título original de la toolbar
+    }
+
+
 
     @Override
     public void onOptionsButtonClick(Song song) {
@@ -514,6 +739,8 @@ public class MainActivity extends AppCompatActivity
         } else {
             currentSongAlbumArt.setImageResource(R.drawable.ic_music_placeholder);
         }
+
+
     }
 
     private Bitmap getAlbumArt(long albumId) {

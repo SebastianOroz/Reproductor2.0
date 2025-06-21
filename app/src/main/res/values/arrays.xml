@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="audio_quality_entries">
+        <item>Baja</item>
+        <item>Normal</item>
+        <item>Alta</item>
+    </string-array>
+
+    <string-array name="audio_quality_values">
+        <item>low</item>
+        <item>normal</item>
+        <item>high</item>
+    </string-array>
+</resources>

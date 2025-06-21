@@ -44,6 +44,7 @@ dependencies {
     implementation ("androidx.appcompat:appcompat:1.6.1")
     implementation ("androidx.recyclerview:recyclerview:1.3.2")
     implementation ("org.jsoup:jsoup:1.14.3")
+    implementation ("androidx.preference:preference:1.2.0")
     implementation(libs.recyclerview)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

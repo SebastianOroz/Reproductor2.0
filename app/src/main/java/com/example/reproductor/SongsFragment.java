@@ -80,4 +80,7 @@ public class SongsFragment extends Fragment {
             swipeRefreshLayout.setRefreshing(refreshing);
         }
     }
+
+
+
 }
