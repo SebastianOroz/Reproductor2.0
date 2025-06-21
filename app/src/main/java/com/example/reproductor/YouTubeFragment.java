@@ -40,6 +40,7 @@ public class YouTubeFragment extends Fragment {
     // --- ¡IMPORTANTE! REEMPLAZA ESTO CON TU PROPIA CLAVE DE API ---
     private static final String YOUTUBE_API_KEY = "AIzaSyB2KdO1OBqyJ48URVyPZcCJab6naVW69-w";
 
+
     private WebView webView;
     private EditText searchEditText;
     private Button searchButton;
