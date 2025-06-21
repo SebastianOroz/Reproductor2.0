@@ -21,7 +21,7 @@ public class TabsPagerAdapter extends FragmentStateAdapter {
             case 1:
                 return new FoldersFragment();
             case 2:
-                return new SongsFragment();
+                return new PlaylistsFragment();
             case 3:
                 return new YouTubeFragment(); // Se añade el fragmento de YouTube
             default:

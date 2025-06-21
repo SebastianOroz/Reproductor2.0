@@ -1,12 +1,12 @@
 package com.example.reproductor;
 
-import android.os.AsyncTask;
+import android.content.Context;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -21,18 +21,24 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+import com.android.volley.NetworkResponse;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 
-import java.io.IOException;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class YouTubeFragment extends Fragment {
+
+    // --- ¡IMPORTANTE! REEMPLAZA ESTO CON TU PROPIA CLAVE DE API ---
+    private static final String YOUTUBE_API_KEY = "AIzaSyB2KdO1OBqyJ48URVyPZcCJab6naVW69-w";
 
     private WebView webView;
     private EditText searchEditText;
@@ -41,13 +47,19 @@ public class YouTubeFragment extends Fragment {
     private ProgressBar progressBar;
     private YouTubeAdapter adapter;
     private final List<YoutubeItem> youtubeItems = new ArrayList<>();
+    private RequestQueue requestQueue;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        requestQueue = Volley.newRequestQueue(requireContext());
+    }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_youtube, container, false);
 
-        // Inicializar vistas
         webView = view.findViewById(R.id.webView);
         searchEditText = view.findViewById(R.id.search_edit_text);
         searchButton = view.findViewById(R.id.search_button);
@@ -57,20 +69,36 @@ public class YouTubeFragment extends Fragment {
         setupRecyclerView();
         setupWebView();
 
-        searchButton.setOnClickListener(v -> {
-            String query = searchEditText.getText().toString().trim();
-            if (!query.isEmpty()) {
-                searchOnYouTube(query);
+        searchButton.setOnClickListener(v -> performSearch());
+        searchEditText.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                performSearch();
+                return true;
             }
+            return false;
         });
 
         return view;
     }
 
+    private void performSearch() {
+        InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(searchEditText.getWindowToken(), 0);
+
+        String query = searchEditText.getText().toString().trim();
+        if (query.isEmpty()) return;
+
+        if (YOUTUBE_API_KEY.equals("TU_API_KEY_AQUI")) {
+            Toast.makeText(getContext(), "Por favor, añade tu API Key en YouTubeFragment.java", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        searchWithYouTubeApi(query);
+    }
+
     private void setupRecyclerView() {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new YouTubeAdapter(youtubeItems, item -> {
-            // Cuando se hace clic en un video, se reproduce en el WebView
             String embedUrl = "https://www.youtube.com/embed/" + item.getVideoId();
             webView.loadUrl(embedUrl);
             webView.setVisibility(View.VISIBLE);
@@ -85,107 +113,68 @@ public class YouTubeFragment extends Fragment {
         webView.setWebChromeClient(new WebChromeClient());
     }
 
-    private void searchOnYouTube(String query) {
-        // Mostrar la barra de progreso y limpiar resultados anteriores
+    private void searchWithYouTubeApi(String query) {
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.GONE);
         youtubeItems.clear();
         adapter.notifyDataSetChanged();
 
-        // Usar un Executor para realizar la operación de red en un hilo secundario
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Handler handler = new Handler(Looper.getMainLooper());
+        String url = "https://www.googleapis.com/youtube/v3/search" +
+                "?part=snippet" +
+                "&q=" + query +
+                "&type=video" +
+                "&maxResults=20" +
+                "&key=" + YOUTUBE_API_KEY;
 
-        executor.execute(() -> {
-            // Tarea en segundo plano
-            List<YoutubeItem> results = new ArrayList<>();
-            try {
-                String url = "https://www.youtube.com/results?search_query=" + query.replace(" ", "+");
-                Document doc = Jsoup.connect(url)
-                        .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")
-                        .get();
-
-                // Selector para encontrar los elementos de video
-                Elements videoElements = doc.select("div#contents ytd-video-renderer");
-
-                for (Element element : videoElements) {
-                    // Se extrae el ID del video, título y miniatura de forma más segura
-                    String videoId = element.select("a#video-title").attr("href");
-                    if (videoId.contains("?v=")) {
-                        videoId = videoId.substring(videoId.indexOf("?v=") + 3);
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null,
+                response -> {
+                    progressBar.setVisibility(View.GONE);
+                    recyclerView.setVisibility(View.VISIBLE);
+                    try {
+                        JSONArray items = response.getJSONArray("items");
+                        for (int i = 0; i < items.length(); i++) {
+                            JSONObject item = items.getJSONObject(i);
+                            JSONObject id = item.getJSONObject("id");
+                            String videoId = id.getString("videoId");
+                            JSONObject snippet = item.getJSONObject("snippet");
+                            String title = snippet.getString("title");
+                            String thumbnailUrl = snippet.getJSONObject("thumbnails").getJSONObject("medium").getString("url");
+                            youtubeItems.add(new YoutubeItem(title, videoId, thumbnailUrl));
+                        }
+                        adapter.notifyDataSetChanged();
+                        if(youtubeItems.isEmpty()){
+                            Toast.makeText(getContext(), "No se encontraron resultados", Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        Toast.makeText(getContext(), "Error al procesar la respuesta", Toast.LENGTH_SHORT).show();
                     }
-                    String title = element.select("a#video-title").attr("title");
-                    String thumbnailUrl = "https://i.ytimg.com/vi/" + videoId + "/hqdefault.jpg";
-
-                    if (!videoId.isEmpty() && !title.isEmpty()) {
-                        results.add(new YoutubeItem(title, videoId, thumbnailUrl));
+                },
+                error -> {
+                    // *** ESTA ES LA SECCIÓN MEJORADA PARA DEPURACIÓN ***
+                    progressBar.setVisibility(View.GONE);
+                    String errorMessage = "Error en la petición: ";
+                    NetworkResponse response = error.networkResponse;
+                    if (response != null && response.data != null) {
+                        // Intenta obtener el mensaje de error detallado de la respuesta de Google
+                        String jsonError = new String(response.data);
+                        errorMessage += response.statusCode + " " + jsonError;
+                    } else {
+                        errorMessage += error.getMessage();
                     }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                    Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+                });
 
-            // De vuelta en el hilo principal para actualizar la UI
-            handler.post(() -> {
-                progressBar.setVisibility(View.GONE);
-                recyclerView.setVisibility(View.VISIBLE);
-                if (results.isEmpty()) {
-                    Toast.makeText(getContext(), "No se encontraron resultados", Toast.LENGTH_SHORT).show();
-                } else {
-                    youtubeItems.addAll(results);
-                    adapter.notifyDataSetChanged();
-                }
-            });
-        });
+        requestQueue.add(jsonObjectRequest);
     }
 
-    /**
-     * Maneja el botón de "atrás". Si el WebView es visible, lo oculta
-     * y muestra la lista de resultados de nuevo.
-     * @return true si el evento fue consumido, false de lo contrario.
-     */
     public boolean canGoBack() {
         if (webView.getVisibility() == View.VISIBLE) {
+            webView.loadUrl("about:blank");
             webView.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
             return true;
         }
         return false;
-    }
-
-    public void goBack() {
-        webView.goBack();
-    }
-
-    private class SearchYouTubeTask extends AsyncTask<String, Void, List<YoutubeItem>> {
-        @Override
-        protected List<YoutubeItem> doInBackground(String... queries) {
-            String query = queries[0];
-            List<YoutubeItem> results = new ArrayList<>();
-            try {
-                String url = "[https://www.youtube.com/results?search_query=](https://www.youtube.com/results?search_query=)" + query;
-                Document doc = Jsoup.connect(url).get();
-                Elements videoElements = doc.select("a.yt-simple-endpoint.style-scope.ytd-video-renderer");
-
-                for (Element element : videoElements) {
-                    String videoId = element.attr("href").split("v=")[1];
-                    String title = element.attr("title");
-                    String thumbnailUrl = "[https://i.ytimg.com/vi/](https://i.ytimg.com/vi/)" + videoId + "/0.jpg";
-                    if (!title.isEmpty()) {
-                        results.add(new YoutubeItem(title, videoId, thumbnailUrl));
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return results;
-        }
-
-        @Override
-        protected void onPostExecute(List<YoutubeItem> results) {
-            youtubeItems.clear();
-            youtubeItems.addAll(results);
-            adapter.notifyDataSetChanged();
-        }
     }
 }
