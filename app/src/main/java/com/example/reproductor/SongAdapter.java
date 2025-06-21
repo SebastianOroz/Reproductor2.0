@@ -12,10 +12,12 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.ImageButton;
+import android.widget.LinearLayout; // ¡NUEVO! Importar LinearLayout para el fondo de selección
 
 import androidx.annotation.NonNull;
-import androidx.preference.PreferenceManager; // ¡Importante! Añadir esta importación
-import android.content.SharedPreferences; // ¡Importante! Añadir esta importación
+import androidx.preference.PreferenceManager;
+import android.content.SharedPreferences;
+import androidx.core.content.ContextCompat; // ¡NUEVO! Para obtener colores de recursos
 
 import com.squareup.picasso.Picasso;
 
@@ -24,6 +26,8 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet; // ¡NUEVO! Para almacenar IDs de canciones seleccionadas
+import java.util.Set; // ¡NUEVO! Para almacenar IDs de canciones seleccionadas
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,36 +36,100 @@ public class SongAdapter extends ArrayAdapter<Song> {
     private final Context context;
     private final ArrayList<Song> songs;
     private final Bitmap defaultAlbumArt;
-    private boolean showAlbumArtPreference; // Variable para almacenar la preferencia de mostrar carátula
+    private boolean showAlbumArtPreference;
 
-    // --- Interfaz para el listener del botón de opciones ---
+    // --- Interfaz para el listener del botón de opciones (EXISTENTE) ---
     public interface OnOptionsButtonClickListener {
-        void onOptionsButtonClick(Song song);
+        void onOptionsButtonClick(Song song); // Este método ahora disparará el diálogo "Ver Detalles/Añadir a Playlist"
+    }
+
+    // --- ¡NUEVO! Interfaz para el listener de selección de canciones ---
+    public interface OnSongSelectionListener {
+        void onSongSelected(Song song); // Cuando una canción es seleccionada
+        void onSongDeselected(Song song); // Cuando una canción es deseleccionada
+        void onSelectionModeChanged(boolean inSelectionMode); // Cuando el modo de selección cambia
     }
 
     private OnOptionsButtonClickListener onOptionsButtonClickListener;
+    private OnSongSelectionListener onSongSelectionListener; // ¡NUEVO! Declaración del listener de selección
+
+    // --- ¡NUEVO! Variables para el modo de selección múltiple ---
+    private boolean inSelectionMode = false;
+    // Usamos un HashSet para un rendimiento rápido de añadir/eliminar/comprobar existencia
+    private Set<Long> selectedSongIds = new HashSet<>();
 
     public SongAdapter(Context context, ArrayList<Song> songs) {
         super(context, 0, songs);
         this.context = context;
         this.songs = songs;
         this.defaultAlbumArt = BitmapFactory.decodeResource(context.getResources(), R.drawable.default_album_art);
-        // Inicializar la preferencia al crear el adaptador
         loadShowAlbumArtPreference();
     }
 
-    // --- Método para establecer el listener del botón de opciones ---
+    // --- Método para establecer el listener del botón de opciones (EXISTENTE) ---
     public void setOnOptionsButtonClickListener(OnOptionsButtonClickListener listener) {
         this.onOptionsButtonClickListener = listener;
     }
 
-    // --- NUEVO: Método para cargar la preferencia de visibilidad de la carátula ---
+    // --- ¡NUEVO! Método para establecer el listener de selección ---
+    public void setOnSongSelectionListener(OnSongSelectionListener listener) {
+        this.onSongSelectionListener = listener;
+    }
+
+    // --- Métodos para controlar el modo de selección (¡NUEVOS!) ---
+    public boolean isInSelectionMode() {
+        return inSelectionMode;
+    }
+
+    public void setInSelectionMode(boolean inSelectionMode) {
+        if (this.inSelectionMode != inSelectionMode) { // Solo si el modo realmente cambia
+            this.inSelectionMode = inSelectionMode;
+            if (!inSelectionMode) { // Si salimos del modo, limpia cualquier selección
+                selectedSongIds.clear();
+            }
+            if (onSongSelectionListener != null) {
+                onSongSelectionListener.onSelectionModeChanged(inSelectionMode);
+            }
+            notifyDataSetChanged(); // Notifica para que todas las vistas se redibujen con el nuevo modo
+        }
+    }
+
+    public void toggleSelection(Song song) {
+        if (selectedSongIds.contains(song.getId())) {
+            selectedSongIds.remove(song.getId());
+            if (onSongSelectionListener != null) {
+                onSongSelectionListener.onSongDeselected(song);
+            }
+        } else {
+            selectedSongIds.add(song.getId());
+            if (onSongSelectionListener != null) {
+                onSongSelectionListener.onSongSelected(song);
+            }
+        }
+        // Si no quedan canciones seleccionadas y estamos en modo de selección, salir del modo
+        if (selectedSongIds.isEmpty() && inSelectionMode) {
+            setInSelectionMode(false);
+        }
+        notifyDataSetChanged(); // Actualiza la vista de la canción específica
+    }
+
+    public ArrayList<Long> getSelectedSongIds() {
+        return new ArrayList<>(selectedSongIds); // Devuelve una copia de la lista de IDs
+    }
+
+    public void clearSelection() {
+        selectedSongIds.clear();
+        setInSelectionMode(false); // Esto ya llama a notifyDataSetChanged()
+    }
+
+
+    // --- Método para cargar la preferencia de visibilidad de la carátula (EXISTENTE) ---
     private void loadShowAlbumArtPreference() {
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
         this.showAlbumArtPreference = sharedPrefs.getBoolean("pref_show_album_art", true);
     }
 
-    // --- NUEVO: Método para actualizar la preferencia y forzar el redibujado de la lista ---
+    // --- Método para actualizar la preferencia y forzar el redibujado de la lista (EXISTENTE) ---
     public void updateShowAlbumArtPreference(boolean showAlbumArt) {
         this.showAlbumArtPreference = showAlbumArt;
         notifyDataSetChanged(); // Notifica al adaptador que los datos han cambiado para redibujar la lista
@@ -71,20 +139,19 @@ public class SongAdapter extends ArrayAdapter<Song> {
     @Override
     public View getView(int position, View convertView, @NonNull ViewGroup parent) {
         Song song = getItem(position);
-        ViewHolder holder; // Declara el ViewHolder
+        ViewHolder holder;
 
         if (convertView == null) {
-            // Infla el layout y crea un nuevo ViewHolder si la vista no existe
             convertView = LayoutInflater.from(context).inflate(R.layout.item_song, parent, false);
             holder = new ViewHolder();
             holder.songTitle = convertView.findViewById(R.id.songTitle);
             holder.songArtist = convertView.findViewById(R.id.songArtist);
             holder.songDuration = convertView.findViewById(R.id.songDuration);
             holder.albumArt = convertView.findViewById(R.id.albumArt);
-            holder.btnOptions = convertView.findViewById(R.id.btnOptions);
-            convertView.setTag(holder); // Almacena el ViewHolder en la vista
+            holder.btnOptions = convertView.findViewById(R.id.btnOptions); // Asegúrate de que el ID en item_song.xml sea 'optionsButton'
+            holder.songItemContainer = convertView.findViewById(R.id.songItemContainer); // ¡NUEVO! Obtener referencia al contenedor principal
+            convertView.setTag(holder);
         } else {
-            // Recupera el ViewHolder de la vista reciclada
             holder = (ViewHolder) convertView.getTag();
         }
 
@@ -93,37 +160,45 @@ public class SongAdapter extends ArrayAdapter<Song> {
             holder.songArtist.setText(song.getArtist());
             holder.songDuration.setText(formatDuration(song.getDuration()));
 
-            // --- Lógica para mostrar/ocultar la carátula según la preferencia ---
             if (showAlbumArtPreference) {
-                holder.albumArt.setVisibility(View.VISIBLE); // Asegurarse de que esté visible
-                loadAlbumArt(song, holder.albumArt); // Cargar la imagen
+                holder.albumArt.setVisibility(View.VISIBLE);
+                loadAlbumArt(song, holder.albumArt);
             } else {
-                holder.albumArt.setVisibility(View.GONE); // Ocultar el ImageView
-                holder.albumArt.setImageDrawable(null); // ¡Importante! Limpiar cualquier imagen previa
+                holder.albumArt.setVisibility(View.GONE);
+                holder.albumArt.setImageDrawable(null);
             }
 
             // Configurar el listener para el botón de opciones
             holder.btnOptions.setOnClickListener(v -> {
                 if (onOptionsButtonClickListener != null) {
-                    onOptionsButtonClickListener.onOptionsButtonClick(song); // Notificar a la MainActivity
+                    // El botón de opciones debe seguir funcionando sin afectar el modo de selección
+                    onOptionsButtonClickListener.onOptionsButtonClick(song);
                 }
             });
+
+            // --- ¡NUEVO! Lógica para el fondo de selección ---
+            if (inSelectionMode && selectedSongIds.contains(song.getId())) {
+                holder.songItemContainer.setBackgroundColor(ContextCompat.getColor(context, R.color.selected_item_background));
+            } else {
+                // Si no está seleccionado o no está en modo de selección, usa el fondo normal (transparente o tu color de fondo por defecto)
+                holder.songItemContainer.setBackgroundColor(ContextCompat.getColor(context, android.R.color.transparent));
+            }
         }
 
         return convertView;
     }
 
-    // --- Clase ViewHolder estática para optimizar el rendimiento ---
+    // --- Clase ViewHolder estática para optimizar el rendimiento (Modificada para incluir songItemContainer) ---
     static class ViewHolder {
         TextView songTitle;
         TextView songArtist;
         TextView songDuration;
         ImageView albumArt;
         ImageButton btnOptions;
+        LinearLayout songItemContainer; // ¡NUEVO! Campo para el contenedor del ítem
     }
 
     private void loadAlbumArt(Song song, ImageView imageView) {
-        // 1. Primero intentar con la imagen local del álbum
         Uri albumArtUri = Uri.parse("content://media/external/audio/albumart/" + song.getAlbumId());
 
         Picasso.get()
@@ -139,8 +214,6 @@ public class SongAdapter extends ArrayAdapter<Song> {
                     @Override
                     public void onError(Exception e) {
                         // Si no hay imagen local, buscar en la web.
-                        // La condición `!imageView.getDrawable().getConstantState().equals(...)` ha sido eliminada
-                        // para simplificar y mejorar el manejo del reciclaje de vistas.
                         new AlbumArtSearchTask(imageView).execute(song);
                     }
                 });
@@ -157,9 +230,6 @@ public class SongAdapter extends ArrayAdapter<Song> {
         protected String doInBackground(Song... songs) {
             Song song = songs[0];
             try {
-                // Buscar en Google Images (técnica de scraping)
-                // Advertencia: El scraping puede no ser fiable a largo plazo y puede ir contra los términos de servicio
-                // de Google. Considera usar una API si esta funcionalidad es crítica.
                 String searchUrl = "https://www.google.com/search?tbm=isch&q=" +
                         Uri.encode(song.getTitle() + " " + song.getArtist() + " album cover 500x500");
                 String html = downloadHtml(searchUrl);
@@ -179,16 +249,15 @@ public class SongAdapter extends ArrayAdapter<Song> {
                         .error(R.drawable.default_album_art)
                         .into(imageView);
             } else {
-                imageView.setImageResource(R.drawable.default_album_art); // Asegurarse de mostrar el placeholder si no se encuentra nada
+                imageView.setImageResource(R.drawable.default_album_art);
             }
         }
 
         private String downloadHtml(String url) throws IOException {
             HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-            connection.setRequestProperty("User-Agent", "Mozilla/5.0"); // Simular un navegador
-            connection.setConnectTimeout(5000); // 5 segundos para conectar
-            connection.
-                    setReadTimeout(10000); // 10 segundos para leer
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(10000);
             InputStream inputStream = connection.getInputStream();
 
             StringBuilder html = new StringBuilder();
@@ -200,14 +269,12 @@ public class SongAdapter extends ArrayAdapter<Song> {
             }
 
             inputStream.close();
-            connection.disconnect(); // Cerrar la conexión
+            connection.disconnect();
             return html.toString();
         }
 
         private String extractFirstImageUrl(String html) {
-            // Expresión regular para encontrar URLs de imágenes en los resultados de Google
-            // Buscar URLs que estén en el formato esperado de Google Images
-            Pattern pattern = Pattern.compile("\"ou\":\"(https?://[^\"]+?\\.(?:png|jpg|jpeg|gif|bmp))\""); // Busca URLs de imagen comunes
+            Pattern pattern = Pattern.compile("\"ou\":\"(https?://[^\"]+?\\.(?:png|jpg|jpeg|gif|bmp))\"");
             Matcher matcher = pattern.matcher(html);
 
             if (matcher.find()) {

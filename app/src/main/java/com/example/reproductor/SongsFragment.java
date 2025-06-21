@@ -74,6 +74,10 @@ public class SongsFragment extends Fragment {
         }
     }
 
+    public ListView getSongListView() {
+        return songListView;
+    }
+
     // Método para setear el estado de refrescando del SwipeRefreshLayout
     public void setRefreshing(boolean refreshing) {
         if (swipeRefreshLayout != null) {

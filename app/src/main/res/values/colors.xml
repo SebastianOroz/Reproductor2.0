@@ -27,5 +27,6 @@
 
     <color name="tab_selected_color">@color/white</color>
     <color name="tab_unselected_color">#CCCCCC</color>
-    <color name="tab_indicator_color">@color/teal_200</color> </resources>
+    <color name="tab_indicator_color">@color/teal_200</color>
+    <color name="selected_item_background">#330099FF</color> </resources>
 

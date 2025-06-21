@@ -1,35 +1,53 @@
 package com.example.reproductor;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 
-// FolderAdapter.java
 public class FolderAdapter extends ArrayAdapter<Folder> {
+    private final Context context;
+    private final ArrayList<Folder> folders;
+
     public FolderAdapter(Context context, ArrayList<Folder> folders) {
-        super(context, android.R.layout.simple_list_item_2, folders);
+        super(context, 0, folders); // Usamos 0 porque inflaremos un layout personalizado
+        this.context = context;
+        this.folders = folders;
     }
 
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
         Folder folder = getItem(position);
-        if (convertView == null) {
-            convertView = LayoutInflater.from(getContext()).inflate(android.R.layout.simple_list_item_2, parent, false);
-        }
-        TextView text1 = convertView.findViewById(android.R.id.text1);
-        TextView text2 = convertView.findViewById(android.R.id.text2);
+        ViewHolder holder; // Usaremos el patrón ViewHolder
 
-        text1.setText(folder.getName());
-        text2.setText(folder.getSongCount() + " canciones");
+        if (convertView == null) {
+            convertView = LayoutInflater.from(context).inflate(R.layout.item_folder, parent, false);
+            holder = new ViewHolder();
+            holder.folderName = convertView.findViewById(R.id.folderNameTextView);
+            holder.songCount = convertView.findViewById(R.id.songCountTextView);
+            convertView.setTag(holder); // Almacena el ViewHolder en la vista
+        } else {
+            holder = (ViewHolder) convertView.getTag(); // Recupera el ViewHolder
+        }
+
+        if (folder != null) {
+            holder.folderName.setText(folder.getName());
+            holder.songCount.setText(folder.getSongCount() + " canciones");
+        }
         return convertView;
+    }
+
+    // Clase ViewHolder estática para optimizar el rendimiento
+    static class ViewHolder {
+        TextView folderName;
+        TextView songCount;
     }
 }

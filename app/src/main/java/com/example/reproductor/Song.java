@@ -1,6 +1,8 @@
 package com.example.reproductor;
 
 public class Song {
+
+    private long id;
     private String title;
     private String artist;
     private String path;
@@ -10,7 +12,8 @@ public class Song {
     private long dateAdded;
     private long dateModified; // NUEVO: Fecha de modificación
 
-    public Song(String title, String artist, String path, long duration, long albumId, String album, long dateAdded, long dateModified) {
+    public Song(long id,String title, String artist, String path, long duration, long albumId, String album, long dateAdded, long dateModified) {
+        this.id = id;
         this.title = title;
         this.artist = artist;
         this.path = path;
@@ -21,6 +24,14 @@ public class Song {
         this.dateModified = dateModified; // Asignar dateModified
     }
 
+    public long getId() {
+        return id;
+    }
+
+
+    public void setId(long id) {
+        this.id = id;
+    }
     public String getTitle() {
         return title;
     }

@@ -76,6 +76,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity
@@ -84,12 +85,17 @@ public class MainActivity extends AppCompatActivity
         SongsFragment.OnSongInteractionListener,
         FoldersFragment.OnFolderSelectedListener {
 
+
+    //Declaraciones
     private static final int PERMISSION_REQUEST_READ_STORAGE = 1;
     private DrawerLayout drawerLayout;
     private Toolbar toolbar;
     private ViewPager2 viewPager;
     private TabLayout tabLayout;
 
+
+
+    private ArrayList<Folder> allFoldersList;
     private Drawable customBackgroundDrawable;
 
     private MediaPlayer mediaPlayer;
@@ -155,6 +161,15 @@ public class MainActivity extends AppCompatActivity
         viewPager = findViewById(R.id.viewPager);
         tabLayout = findViewById(R.id.tabLayout);
         customBackgroundImageView = findViewById(R.id.custom_background_image_view);
+
+
+
+
+        allSongsList = new ArrayList<>();
+        currentDisplayList = new ArrayList<>();
+        shuffledSongList = new ArrayList<>();
+        allFoldersList = new ArrayList<>();
+
 
 
 
@@ -313,9 +328,10 @@ public class MainActivity extends AppCompatActivity
 
     private void loadSongs() {
         new Thread(() -> {
-            allSongsList.clear();
+            allSongsList.clear(); // Limpia la lista de canciones existente
             Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
             String[] projection = {
+                    MediaStore.Audio.Media._ID, // ¡IMPORTANTE: Añade esta línea!
                     MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.ARTIST,
                     MediaStore.Audio.Media.DATA, MediaStore.Audio.Media.DURATION,
                     MediaStore.Audio.Media.ALBUM_ID, MediaStore.Audio.Media.ALBUM,
@@ -324,6 +340,8 @@ public class MainActivity extends AppCompatActivity
             String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
             try (Cursor cursor = getContentResolver().query(uri, projection, selection, null, null)) {
                 if (cursor != null) {
+                    // También necesitas obtener el índice de la nueva columna _ID
+                    int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID); // ¡IMPORTANTE: Añade esta línea!
                     int titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
                     int artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST);
                     int pathColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
@@ -334,7 +352,9 @@ public class MainActivity extends AppCompatActivity
                     int dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED);
 
                     while (cursor.moveToNext()) {
+                        long id = cursor.getLong(idColumn); // ¡IMPORTANTE: Obtén el ID!
                         allSongsList.add(new Song(
+                                id, // Pasa el ID al constructor de Song
                                 cursor.getString(titleColumn), cursor.getString(artistColumn),
                                 cursor.getString(pathColumn), cursor.getLong(durationColumn),
                                 cursor.getLong(albumIdColumn), cursor.getString(albumColumn),
@@ -345,7 +365,10 @@ public class MainActivity extends AppCompatActivity
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            runOnUiThread(this::showAllSongs);
+            runOnUiThread(() -> {
+                showAllSongs();
+                loadAllFolders();
+            });
         }).start();
     }
 
@@ -367,19 +390,155 @@ public class MainActivity extends AppCompatActivity
         playSong(position, false);
     }
 
+
+
+
+
+
+
+    //Carpetas
+
+
+    public ArrayList<Folder> getDisplayableFoldersList() {
+        return allFoldersList;
+    }
+
+    private void loadAllFolders() {
+        new Thread(() -> {
+            // Usar un HashMap para evitar duplicados y contar canciones por carpeta
+            HashMap<String, Folder> folderMap = new HashMap<>();
+
+            // Asegúrate de que allSongsList ya esté cargada antes de llamar a loadAllFolders()
+            // (esto se gestiona si loadAllFolders() se llama después de loadSongs())
+            for (Song song : allSongsList) {
+                if (song.getPath() != null) {
+                    File songFile = new File(song.getPath());
+                    String parentPath = songFile.getParent(); // Ruta completa de la carpeta
+                    String parentName = null;
+                    if (songFile.getParentFile() != null) {
+                        parentName = songFile.getParentFile().getName(); // Solo el nombre de la carpeta
+                    }
+
+
+                    if (parentPath != null) {
+                        if (folderMap.containsKey(parentPath)) {
+                            // Si la carpeta ya existe, incrementa el contador de canciones
+                            folderMap.get(parentPath).setSongCount(folderMap.get(parentPath).getSongCount() + 1);
+                        } else {
+                            // Si es una carpeta nueva, crea un objeto Folder
+                            // Manejar el caso de parentName nulo (ej. si la canción está en la raíz)
+                            if (parentName == null || parentName.isEmpty()) {
+                                parentName = "Almacenamiento Interno"; // Nombre por defecto para la raíz
+                            }
+                            Folder folder = new Folder(parentName, parentPath, 1);
+                            folderMap.put(parentPath, folder);
+                        }
+                    }
+                }
+            }
+
+            // Convertir el HashMap de carpetas únicas a un ArrayList
+            final ArrayList<Folder> sortedFolders = new ArrayList<>(folderMap.values());
+
+            // Ordenar las carpetas alfabéticamente por nombre
+            Collections.sort(sortedFolders, (f1, f2) -> f1.getName().compareToIgnoreCase(f2.getName()));
+
+            // Actualizar la lista en el hilo principal y notificar al FoldersFragment
+            runOnUiThread(() -> {
+                allFoldersList.clear(); // Limpia la lista de carpetas de MainActivity
+                allFoldersList.addAll(sortedFolders); // Añade las carpetas recién escaneadas y ordenadas
+
+                FoldersFragment foldersFragment = getFoldersFragment();
+                if (foldersFragment != null && foldersFragment.isAdded()) {
+                    // Notifica al adaptador del FoldersFragment para que se actualice
+                    foldersFragment.notifyAdapterChange();
+                }
+                // Opcional: Toast para indicar que las carpetas han cargado (si lo deseas)
+                // Toast.makeText(MainActivity.this, "Carpetas cargadas.", Toast.LENGTH_SHORT).show();
+            });
+        }).start();
+    }
+
+
+    private FoldersFragment getFoldersFragment() {
+        // Asumiendo que FoldersFragment es el segundo tab (índice 1)
+        return (FoldersFragment) getSupportFragmentManager().findFragmentByTag("f" + viewPager.getAdapter().getItemId(1));
+        // O si tu TabsPagerAdapter siempre asigna tags como "f0", "f1", etc. y es el tab 1:
+        // return (FoldersFragment) getSupportFragmentManager().findFragmentByTag("f1");
+    }
     @Override
     public void onFolderSelected(String folderPath) {
-        currentDisplayList.clear();
-        for (Song song : allSongsList) {
-            if (song.getPath() != null && song.getPath().startsWith(folderPath)) {
-                currentDisplayList.add(song);
+        Toast.makeText(this, "Cargando canciones de la carpeta...", Toast.LENGTH_SHORT).show();
+
+        String selectedFolderPath = folderPath;
+
+        new Thread(() -> {
+            ArrayList<Song> filteredSongs = new ArrayList<>();
+            for (Song song : allSongsList) {
+                if (song.getPath() != null && song.getPath().startsWith(selectedFolderPath)) {
+                    filteredSongs.add(song);
+                }
             }
-        }
-        sortSongList();
-        viewPager.setCurrentItem(0, true);
-        toolbar.setTitle(new File(folderPath).getName());
-        notifySongsFragmentAdapterChanged();
+
+            Collections.sort(filteredSongs, (s1, s2) -> {
+                switch (currentSortOrder) {
+                    case SORT_ORDER_NAME_DESC:
+                        return s2.getTitle().compareToIgnoreCase(s1.getTitle());
+                    case SORT_ORDER_ARTIST:
+                        String artist1 = s1.getArtist() != null ? s1.getArtist() : "";
+                        String artist2 = s2.getArtist() != null ? s2.getArtist() : "";
+                        return artist1.compareToIgnoreCase(artist2);
+                    case SORT_ORDER_DURATION_ASC:
+                        return Long.compare(s1.getDuration(), s2.getDuration());
+                    case SORT_ORDER_DURATION_DESC:
+                        return Long.compare(s2.getDuration(), s1.getDuration());
+                    case SORT_ORDER_DATE_ADDED_ASC:
+                        return Long.compare(s1.getDateAdded(), s2.getDateAdded());
+                    case SORT_ORDER_DATE_ADDED_DESC:
+                        return Long.compare(s2.getDateAdded(), s1.getDateAdded());
+                    case SORT_ORDER_DATE_MODIFIED_ASC:
+                        return Long.compare(s1.getDateModified(), s2.getDateModified());
+                    case SORT_ORDER_DATE_MODIFIED_DESC:
+                        return Long.compare(s2.getDateModified(), s1.getDateModified());
+                    case SORT_ORDER_NAME_ASC:
+                    default:
+                        return s1.getTitle().compareToIgnoreCase(s2.getTitle());
+                }
+            });
+
+            runOnUiThread(() -> {
+                currentDisplayList.clear();
+                currentDisplayList.addAll(filteredSongs);
+
+                viewPager.setCurrentItem(0, true);
+                toolbar.setTitle(new File(selectedFolderPath).getName());
+
+                SongsFragment songsFragment = getSongsFragment();
+                if (songsFragment != null && songsFragment.isAdded()) {
+                    songsFragment.notifyAdapterChange();
+
+                    // **¡NUEVO CAMBIO AQUÍ!**
+                    // Invalida la vista del ListView para forzar un redibujado inmediato
+                    songsFragment.getSongListView().invalidateViews();
+
+                    // Postear el Toast después de un pequeño retraso para asegurar el redibujado visual
+                    songsFragment.getSongListView().postDelayed(() -> {
+                        Toast.makeText(this, "Canciones cargadas.", Toast.LENGTH_SHORT).show();
+                    }, 150); // Aumenté ligeramente el retraso para más seguridad, puedes ajustar.
+
+                } else {
+                    Toast.makeText(this, "Canciones cargadas.", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }).start();
     }
+
+
+
+
+
+
+
 
     private void playSong(int position, boolean fromShuffled) {
         ArrayList<Song> activeList = isShuffleOn ? shuffledSongList : currentDisplayList;
