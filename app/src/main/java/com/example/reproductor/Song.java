@@ -10,7 +10,7 @@ public class Song {
     private long albumId;
     private String album;
     private long dateAdded;
-    private long dateModified; // NUEVO: Fecha de modificación
+    private long dateModified;
 
     public Song(long id,String title, String artist, String path, long duration, long albumId, String album, long dateAdded, long dateModified) {
         this.id = id;
@@ -21,7 +21,7 @@ public class Song {
         this.albumId = albumId;
         this.album = album;
         this.dateAdded = dateAdded;
-        this.dateModified = dateModified; // Asignar dateModified
+        this.dateModified = dateModified;
     }
 
     public long getId() {
@@ -60,7 +60,7 @@ public class Song {
         return dateAdded;
     }
 
-    public long getDateModified() { // NUEVO: Getter para dateModified
+    public long getDateModified() {
         return dateModified;
     }
 }

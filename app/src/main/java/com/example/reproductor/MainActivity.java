@@ -34,7 +34,7 @@ import android.widget.Toast;
 
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.ActionMode; // ¡NUEVO! Importar ActionMode
+import android.view.ActionMode;
 import android.widget.EditText;
 
 import android.content.Context;
@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity
         PlaylistsFragment.OnPlaylistInteractionListener{
 
 
-    //Declaraciones
+
     private static final int PERMISSION_REQUEST_READ_STORAGE = 1;
     private DrawerLayout drawerLayout;
     private Toolbar toolbar;
@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity
     private TabLayout tabLayout;
 
 
-    private ArrayList<Playlist> allPlaylists; // Lista de todas las playlists
+    private ArrayList<Playlist> allPlaylists;
     private String PLAYLISTS_PREFS = "playlists_prefs";
     private ArrayList<Folder> allFoldersList;
     private Drawable customBackgroundDrawable;
@@ -150,7 +150,6 @@ public class MainActivity extends AppCompatActivity
 
     private ActionMode mActionMode;
     private ActionMode.Callback mActionModeCallback = new ActionMode.Callback() {
-        // ... (Tu implementación existente de mActionModeCallback) ...
         @Override
         public boolean onCreateActionMode(ActionMode mode, Menu menu) {
             mode.getMenuInflater().inflate(R.menu.contextual_action_bar_songs, menu);
@@ -389,10 +388,10 @@ public class MainActivity extends AppCompatActivity
 
     private void loadSongs() {
         new Thread(() -> {
-            allSongsList.clear(); // Limpia la lista de canciones existente
+            allSongsList.clear();
             Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
             String[] projection = {
-                    MediaStore.Audio.Media._ID, // ¡IMPORTANTE: Añade esta línea!
+                    MediaStore.Audio.Media._ID,
                     MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.ARTIST,
                     MediaStore.Audio.Media.DATA, MediaStore.Audio.Media.DURATION,
                     MediaStore.Audio.Media.ALBUM_ID, MediaStore.Audio.Media.ALBUM,
@@ -401,8 +400,8 @@ public class MainActivity extends AppCompatActivity
             String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
             try (Cursor cursor = getContentResolver().query(uri, projection, selection, null, null)) {
                 if (cursor != null) {
-                    // También necesitas obtener el índice de la nueva columna _ID
-                    int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID); // ¡IMPORTANTE: Añade esta línea!
+
+                    int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
                     int titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
                     int artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST);
                     int pathColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
@@ -413,9 +412,9 @@ public class MainActivity extends AppCompatActivity
                     int dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED);
 
                     while (cursor.moveToNext()) {
-                        long id = cursor.getLong(idColumn); // ¡IMPORTANTE: Obtén el ID!
+                        long id = cursor.getLong(idColumn);
                         allSongsList.add(new Song(
-                                id, // Pasa el ID al constructor de Song
+                                id,
                                 cursor.getString(titleColumn), cursor.getString(artistColumn),
                                 cursor.getString(pathColumn), cursor.getLong(durationColumn),
                                 cursor.getLong(albumIdColumn), cursor.getString(albumColumn),
@@ -461,14 +460,14 @@ public class MainActivity extends AppCompatActivity
 
 
     public void savePlaylists() {
-        // Implementa el guardado de playlists (ver método más abajo)
+
         savePlaylistsToPreferences();
     }
 
 
     public void addPlaylist(Playlist playlist) {
         allPlaylists.add(playlist);
-        savePlaylistsToPreferences(); // Guardar después de añadir
+        savePlaylistsToPreferences();
         PlaylistsFragment playlistsFragment = getPlaylistsFragment();
         if (playlistsFragment != null) {
             playlistsFragment.notifyAdapterChange();
@@ -477,80 +476,76 @@ public class MainActivity extends AppCompatActivity
 
 
     public void playPlaylist(Playlist playlist) {
-        // Lógica para reproducir una playlist
+
         if (playlist.getSongIds().isEmpty()) {
             Toast.makeText(this, "La playlist está vacía.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Crear una currentDisplayList temporal con las canciones de la playlist
+
         currentDisplayList.clear();
         for (long songId : playlist.getSongIds()) {
-            Song song = getSongById(songId); // Necesitarás un método para obtener Song por ID
+            Song song = getSongById(songId);
             if (song != null) {
                 currentDisplayList.add(song);
             }
         }
 
         if (!currentDisplayList.isEmpty()) {
-            // Ir a la pestaña de Canciones y empezar a reproducir la primera
+
             viewPager.setCurrentItem(0, true);
-            toolbar.setTitle("Playlist: " + playlist.getName()); // Cambiar título de la toolbar
-            notifySongsFragmentAdapterChanged(); // Asegurar que el fragmento de canciones se actualice
-            playSong(0, false); // Reproducir la primera canción de la playlist
+            toolbar.setTitle("Playlist: " + playlist.getName());
+            notifySongsFragmentAdapterChanged();
+            playSong(0, false);
         } else {
             Toast.makeText(this, "No se encontraron canciones válidas en esta playlist.", Toast.LENGTH_SHORT).show();
         }
     }
 
-    // Metodos para SongsFragment.OnSongInteractionListener
+
 
 
 
 
     @Override
     public void showAddToPlaylistDialog(List<Long> songIdsToAdd) {
-        // Implementa el diálogo para añadir a playlist (ver método showAddToPlaylistDialog más abajo)
+
         showAddToPlaylistDialogInternal(songIdsToAdd);
     }
 
     @Override
     public void showSongDetails(Song song) {
-        // Ya tienes una implementación de esto en onOptionsButtonClick en la versión antigua.
-        // Ahora lo centralizamos aquí.
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Detalles de la Canción");
         String details = "Título: " + song.getTitle() + "\n" +
                 "Artista: " + song.getArtist() + "\n" +
                 "Álbum: " + song.getAlbum() + "\n" +
-                "Duración: " + formatDuration(song.getDuration()); // Necesitas un método formatDuration
+                "Duración: " + formatDuration(song.getDuration());
         builder.setMessage(details);
         builder.setPositiveButton("Cerrar", (dialog, which) -> dialog.dismiss());
         builder.show();
     }
 
-    // Metodo para SongsFragment.OnSongSelectionListener
+
     @Override
     public void onSelectionModeChanged(boolean inSelectionMode) {
         if (inSelectionMode) {
-            // Mostrar una barra de acciones de contexto (CAB) o botones flotantes
-            // Por ejemplo, podrías cambiar la visibilidad de un FAB para "Añadir a Playlist"
+
             Toast.makeText(this, "Modo de selección múltiple activado", Toast.LENGTH_SHORT).show();
-            // Puedes mostrar un botón de "Añadir a Playlist" aquí
+
             showSelectionModeActionBar(true);
         } else {
             Toast.makeText(this, "Modo de selección múltiple desactivado", Toast.LENGTH_SHORT).show();
-            // Ocultar la barra de acciones de contexto o limpiar el estado
+
             showSelectionModeActionBar(false);
         }
     }
 
 
-// Dentro de MainActivity.java
 
-    // Helper para obtener una canción por su ID (necesario para construir playlists)
     private Song getSongById(long songId) {
-        // Podrías optimizar esto si allSongsList estuviera en un HashMap<Long, Song>
+
         for (Song song : allSongsList) {
             if (song.getId() == songId) {
                 return song;
@@ -559,14 +554,14 @@ public class MainActivity extends AppCompatActivity
         return null;
     }
 
-    // Helper para formatear la duración (si no lo tienes)
+
     private String formatDuration(long millis) {
         long minutes = (millis / 1000) / 60;
         long seconds = (millis / 1000) % 60;
         return String.format("%02d:%02d", minutes, seconds);
     }
 
-    // Nuevo método para mostrar el diálogo de añadir a playlist
+
     private void showAddToPlaylistDialogInternal(List<Long> songIdsToAdd) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_to_playlist, null);
@@ -575,7 +570,7 @@ public class MainActivity extends AppCompatActivity
         Button btnCreateNew = dialogView.findViewById(R.id.btnCreateNewPlaylist);
         ListView existingPlaylistsListView = dialogView.findViewById(R.id.existingPlaylistsListView);
 
-        // Adaptador para la lista de playlists existentes dentro del diálogo
+
         PlaylistAdapter dialogPlaylistAdapter = new PlaylistAdapter(this, allPlaylists);
         existingPlaylistsListView.setAdapter(dialogPlaylistAdapter);
 
@@ -592,12 +587,12 @@ public class MainActivity extends AppCompatActivity
             savePlaylistsToPreferences();
             Toast.makeText(this, songIdsToAdd.size() + " canciones añadidas a '" + selectedPlaylist.getName() + "'.", Toast.LENGTH_SHORT).show();
             dialog.dismiss();
-            // Notificar al fragmento de playlists si está visible
+
             PlaylistsFragment playlistsFragment = getPlaylistsFragment();
             if (playlistsFragment != null) {
                 playlistsFragment.notifyAdapterChange();
             }
-            // Salir del modo de selección si estamos en él (después de añadir)
+
             SongsFragment songsFragment = getSongsFragment();
             if (songsFragment != null && songsFragment.adapter.isInSelectionMode()) {
                 songsFragment.exitSelectionMode();
@@ -622,7 +617,7 @@ public class MainActivity extends AppCompatActivity
                 return;
             }
 
-            // Verificar si ya existe una playlist con ese nombre
+
             for (Playlist p : allPlaylists) {
                 if (p.getName().equalsIgnoreCase(playlistName)) {
                     Toast.makeText(this, "Ya existe una playlist con ese nombre.", Toast.LENGTH_SHORT).show();
@@ -631,17 +626,17 @@ public class MainActivity extends AppCompatActivity
             }
 
             Playlist newPlaylist = new Playlist(playlistName);
-            newPlaylist.addSongIds(songIdsToAdd); // Añade las canciones seleccionadas
+            newPlaylist.addSongIds(songIdsToAdd);
             allPlaylists.add(newPlaylist);
             savePlaylistsToPreferences();
             Toast.makeText(this, playlistName + " creada y " + songIdsToAdd.size() + " canciones añadidas.", Toast.LENGTH_SHORT).show();
 
-            // Notificar al fragmento de playlists si está visible
+
             PlaylistsFragment playlistsFragment = getPlaylistsFragment();
             if (playlistsFragment != null) {
                 playlistsFragment.notifyAdapterChange();
             }
-            // Salir del modo de selección si estamos en él (después de añadir)
+
             SongsFragment songsFragment = getSongsFragment();
             if (songsFragment != null && songsFragment.adapter.isInSelectionMode()) {
                 songsFragment.exitSelectionMode();
@@ -649,7 +644,7 @@ public class MainActivity extends AppCompatActivity
         });
         builder.setNegativeButton("Cancelar", (dialog, which) -> {
             dialog.cancel();
-            // Opcional: Si el usuario cancela la creación, salir del modo de selección
+
             SongsFragment songsFragment = getSongsFragment();
             if (songsFragment != null && songsFragment.adapter.isInSelectionMode()) {
                 songsFragment.exitSelectionMode();
@@ -658,16 +653,16 @@ public class MainActivity extends AppCompatActivity
         builder.show();
     }
 
-    // Métodos para guardar y cargar playlists (usando SharedPreferences)
+
     private void savePlaylistsToPreferences() {
         SharedPreferences sharedPrefs = getSharedPreferences(PLAYLISTS_PREFS, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPrefs.edit();
 
-        Gson gson = new Gson(); // Necesitarás la librería Gson
+        Gson gson = new Gson();
         String json = gson.toJson(allPlaylists);
         editor.putString("all_playlists_json", json);
         editor.apply();
-        // Toast.makeText(this, "Playlists guardadas.", Toast.LENGTH_SHORT).show(); // Para depuración
+
     }
 
     private void loadPlaylists() {
@@ -676,7 +671,7 @@ public class MainActivity extends AppCompatActivity
         String json = sharedPrefs.getString("all_playlists_json", null);
 
         if (json != null) {
-            // Necesitamos un Type para que Gson sepa cómo deserializar ArrayList<Playlist>
+
             java.lang.reflect.Type type = new com.google.gson.reflect.TypeToken<ArrayList<Playlist>>() {}.getType();
             ArrayList<Playlist> loadedPlaylists = gson.fromJson(json, type);
             if (loadedPlaylists != null) {
@@ -684,33 +679,27 @@ public class MainActivity extends AppCompatActivity
                 allPlaylists.addAll(loadedPlaylists);
             }
         }
-        // Toast.makeText(this, "Playlists cargadas.", Toast.LENGTH_SHORT).show(); // Para depuración
+
     }
 
-    // Nuevo getter para PlaylistsFragment
+
     private PlaylistsFragment getPlaylistsFragment() {
-        // Asumiendo que PlaylistsFragment es el tercer tab (índice 2)
+
         return (PlaylistsFragment) getSupportFragmentManager().findFragmentByTag("f" + viewPager.getAdapter().getItemId(2));
     }
 
-    // **¡NUEVO!** Método para manejar la barra de acciones contextual de selección múltiple
-// Puedes personalizar esto para usar un RelativeLayout, un AppBar, etc.
-// Esto es un ejemplo básico.
+
     private void showSelectionModeActionBar(boolean show) {
         if (show) {
-            // Aquí podrías inflar una vista de barra de acción personalizada
-            // o mostrar un FAB con la opción "Añadir a Playlist"
-            // Por simplicidad, por ahora haremos que el FAB de añadir playlist aparezca.
-            // Si tienes un FAB específico para esta acción en tu layout principal:
-            // btnAddToPlaylistSelection.setVisibility(View.VISIBLE);
 
-            // Temporalmente, puedes cambiar el título de la toolbar o mostrar un mensaje
+
+
             toolbar.setTitle("Seleccionadas: " + getSongsFragment().getSelectedSongIds().size());
 
-            // Y un botón para "Añadir a Playlist" si hay canciones seleccionadas
+
             if (getSongsFragment() != null && !getSongsFragment().getSelectedSongIds().isEmpty()) {
-                // Podrías usar btnSort como un botón temporal de "Añadir a Playlist"
-                btnSort.setImageResource(R.drawable.ic_add); // Asume que tienes este icono
+
+                btnSort.setImageResource(R.drawable.ic_add);
                 btnSort.setVisibility(View.VISIBLE);
                 btnSort.setOnClickListener(v -> {
                     List<Long> selectedIds = getSongsFragment().getSelectedSongIds();
@@ -721,20 +710,16 @@ public class MainActivity extends AppCompatActivity
                     }
                 });
             } else {
-                btnSort.setVisibility(View.GONE); // Oculta si no hay seleccionadas
+                btnSort.setVisibility(View.GONE);
             }
 
-            // También puedes agregar un botón de "Cancelar" en la Toolbar
-            // Esto es más avanzado y podría requerir Toolbar.setNavigationIcon()
-            // Por ahora, el onBackPressed() puede servir para salir del modo.
 
         } else {
-            // Ocultar elementos de la barra de acciones de contexto
-            toolbar.setTitle("Reproductor"); // Vuelve al título normal
-            btnSort.setImageResource(R.drawable.ic_sort); // Vuelve al icono de ordenar
-            btnSort.setOnClickListener(v -> showSortOptionsPopup()); // Vuelve al listener original
-            // btnAddToPlaylistSelection.setVisibility(View.GONE);
-            // Asegurarse de que el fragmento de canciones salga del modo de selección
+
+            toolbar.setTitle("Reproductor");
+            btnSort.setImageResource(R.drawable.ic_sort);
+            btnSort.setOnClickListener(v -> showSortOptionsPopup());
+
             SongsFragment songsFragment = getSongsFragment();
             if (songsFragment != null) {
                 songsFragment.exitSelectionMode();
@@ -742,27 +727,27 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    // Modificar onBackPressed para salir del modo de selección
+
     @Override
     public void onBackPressed() {
         SongsFragment songsFragment = getSongsFragment();
         if (songsFragment != null && songsFragment.isInSelectionMode()) {
-            songsFragment.exitSelectionMode(); // Salir del modo de selección
-            return; // Consumir el evento back
+            songsFragment.exitSelectionMode();
+            return;
         }
-        // ... (resto de tu lógica onBackPressed existente) ...
+
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
             drawerLayout.closeDrawer(GravityCompat.START);
-        } else if (viewPager.getCurrentItem() == 3) { // YouTubeFragment
+        } else if (viewPager.getCurrentItem() == 3) {
             YouTubeFragment fragment = (YouTubeFragment) getSupportFragmentManager().findFragmentByTag("f3");
             if (fragment != null && fragment.canGoBack()) {
-                fragment.canGoBack(); // <--- ESTA LÍNEA CAUSA EL ERROR
+                fragment.canGoBack();
             } else {
                 super.onBackPressed();
             }
         } else if (viewPager.getCurrentItem() == 0 && !toolbar.getTitle().toString().equals("Reproductor")) {
-            // Si estás en la pestaña de canciones y el título no es "Reproductor" (ej. estás viendo una carpeta/playlist)
-            showAllSongs(); // Vuelve a mostrar todas las canciones
+
+            showAllSongs();
         } else {
             super.onBackPressed();
         }
@@ -787,30 +772,28 @@ public class MainActivity extends AppCompatActivity
 
     private void loadAllFolders() {
         new Thread(() -> {
-            // Usar un HashMap para evitar duplicados y contar canciones por carpeta
+
             HashMap<String, Folder> folderMap = new HashMap<>();
 
-            // Asegúrate de que allSongsList ya esté cargada antes de llamar a loadAllFolders()
-            // (esto se gestiona si loadAllFolders() se llama después de loadSongs())
+
             for (Song song : allSongsList) {
                 if (song.getPath() != null) {
                     File songFile = new File(song.getPath());
-                    String parentPath = songFile.getParent(); // Ruta completa de la carpeta
+                    String parentPath = songFile.getParent();
                     String parentName = null;
                     if (songFile.getParentFile() != null) {
-                        parentName = songFile.getParentFile().getName(); // Solo el nombre de la carpeta
+                        parentName = songFile.getParentFile().getName();
                     }
 
 
                     if (parentPath != null) {
                         if (folderMap.containsKey(parentPath)) {
-                            // Si la carpeta ya existe, incrementa el contador de canciones
+
                             folderMap.get(parentPath).setSongCount(folderMap.get(parentPath).getSongCount() + 1);
                         } else {
-                            // Si es una carpeta nueva, crea un objeto Folder
-                            // Manejar el caso de parentName nulo (ej. si la canción está en la raíz)
+
                             if (parentName == null || parentName.isEmpty()) {
-                                parentName = "Almacenamiento Interno"; // Nombre por defecto para la raíz
+                                parentName = "Almacenamiento Interno";
                             }
                             Folder folder = new Folder(parentName, parentPath, 1);
                             folderMap.put(parentPath, folder);
@@ -819,34 +802,32 @@ public class MainActivity extends AppCompatActivity
                 }
             }
 
-            // Convertir el HashMap de carpetas únicas a un ArrayList
+
             final ArrayList<Folder> sortedFolders = new ArrayList<>(folderMap.values());
 
-            // Ordenar las carpetas alfabéticamente por nombre
+
             Collections.sort(sortedFolders, (f1, f2) -> f1.getName().compareToIgnoreCase(f2.getName()));
 
-            // Actualizar la lista en el hilo principal y notificar al FoldersFragment
+
             runOnUiThread(() -> {
-                allFoldersList.clear(); // Limpia la lista de carpetas de MainActivity
-                allFoldersList.addAll(sortedFolders); // Añade las carpetas recién escaneadas y ordenadas
+                allFoldersList.clear();
+                allFoldersList.addAll(sortedFolders);
 
                 FoldersFragment foldersFragment = getFoldersFragment();
                 if (foldersFragment != null && foldersFragment.isAdded()) {
-                    // Notifica al adaptador del FoldersFragment para que se actualice
+
                     foldersFragment.notifyAdapterChange();
                 }
-                // Opcional: Toast para indicar que las carpetas han cargado (si lo deseas)
-                // Toast.makeText(MainActivity.this, "Carpetas cargadas.", Toast.LENGTH_SHORT).show();
+
             });
         }).start();
     }
 
 
     private FoldersFragment getFoldersFragment() {
-        // Asumiendo que FoldersFragment es el segundo tab (índice 1)
+
         return (FoldersFragment) getSupportFragmentManager().findFragmentByTag("f" + viewPager.getAdapter().getItemId(1));
-        // O si tu TabsPagerAdapter siempre asigna tags como "f0", "f1", etc. y es el tab 1:
-        // return (FoldersFragment) getSupportFragmentManager().findFragmentByTag("f1");
+
     }
     @Override
     public void onFolderSelected(String folderPath) {
@@ -899,14 +880,13 @@ public class MainActivity extends AppCompatActivity
                 if (songsFragment != null && songsFragment.isAdded()) {
                     songsFragment.notifyAdapterChange();
 
-                    // **¡NUEVO CAMBIO AQUÍ!**
-                    // Invalida la vista del ListView para forzar un redibujado inmediato
+
                     songsFragment.getSongListView().invalidateViews();
 
-                    // Postear el Toast después de un pequeño retraso para asegurar el redibujado visual
+
                     songsFragment.getSongListView().postDelayed(() -> {
                         Toast.makeText(this, "Canciones cargadas.", Toast.LENGTH_SHORT).show();
-                    }, 150); // Aumenté ligeramente el retraso para más seguridad, puedes ajustar.
+                    }, 150);
 
                 } else {
                     Toast.makeText(this, "Canciones cargadas.", Toast.LENGTH_SHORT).show();

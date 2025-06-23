@@ -17,7 +17,7 @@ public class FolderAdapter extends ArrayAdapter<Folder> {
     private final ArrayList<Folder> folders;
 
     public FolderAdapter(Context context, ArrayList<Folder> folders) {
-        super(context, 0, folders); // Usamos 0 porque inflaremos un layout personalizado
+        super(context, 0, folders);
         this.context = context;
         this.folders = folders;
     }
@@ -26,16 +26,16 @@ public class FolderAdapter extends ArrayAdapter<Folder> {
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
         Folder folder = getItem(position);
-        ViewHolder holder; // Usaremos el patrón ViewHolder
+        ViewHolder holder;
 
         if (convertView == null) {
             convertView = LayoutInflater.from(context).inflate(R.layout.item_folder, parent, false);
             holder = new ViewHolder();
             holder.folderName = convertView.findViewById(R.id.folderNameTextView);
             holder.songCount = convertView.findViewById(R.id.songCountTextView);
-            convertView.setTag(holder); // Almacena el ViewHolder en la vista
+            convertView.setTag(holder);
         } else {
-            holder = (ViewHolder) convertView.getTag(); // Recupera el ViewHolder
+            holder = (ViewHolder) convertView.getTag();
         }
 
         if (folder != null) {
@@ -45,7 +45,7 @@ public class FolderAdapter extends ArrayAdapter<Folder> {
         return convertView;
     }
 
-    // Clase ViewHolder estática para optimizar el rendimiento
+
     static class ViewHolder {
         TextView folderName;
         TextView songCount;

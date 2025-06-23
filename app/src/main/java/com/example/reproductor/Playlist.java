@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Playlist {
     private String name;
-    private List<Long> songIds; // Usaremos IDs de canciones para almacenar, es más robusto
+    private List<Long> songIds;
 
     public Playlist(String name) {
         this.name = name;
@@ -25,7 +25,7 @@ public class Playlist {
     }
 
     public void addSongId(long songId) {
-        if (!songIds.contains(songId)) { // Evita duplicados
+        if (!songIds.contains(songId)) {
             songIds.add(songId);
         }
     }

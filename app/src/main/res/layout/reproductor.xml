@@ -6,7 +6,7 @@
     android:background="#121212"
     tools:context=".PlayerActivity">
 
-    <!-- Imagen de fondo con efecto blur (opcional) -->
+
     <ImageView
         android:id="@+id/backgroundArt"
         android:layout_width="match_parent"
@@ -15,14 +15,14 @@
         android:alpha="0.3"
         android:contentDescription="Background album art" />
 
-    <!-- Contenedor principal -->
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:padding="24dp">
 
-        <!-- Header (Título y botón de cerrar) -->
+
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -47,14 +47,14 @@
                 android:textAllCaps="true" />
         </RelativeLayout>
 
-        <!-- Área de la carátula del álbum -->
+
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:gravity="center">
 
-            <!-- Imagen del álbum con sombra -->
+
             <ImageView
                 android:id="@+id/albumArt"
                 android:layout_width="300dp"
@@ -62,9 +62,9 @@
                 android:scaleType="centerCrop"
                 android:elevation="8dp"
                 android:contentDescription="Album art"
-                android:src="@drawable/default_album_art" /> <!-- Imagen por defecto -->
+                android:src="@drawable/default_album_art" />
 
-            <!-- Animación de ondas (opcional) -->
+
             <ImageView
                 android:id="@+id/visualizer"
                 android:layout_width="match_parent"
@@ -75,7 +75,7 @@
                 android:src="@drawable/ic_visualizer" />
         </RelativeLayout>
 
-        <!-- Info de la canción -->
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -106,7 +106,7 @@
                 android:maxLines="1" />
         </LinearLayout>
 
-        <!-- SeekBar y tiempos -->
+
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -140,7 +140,7 @@
                 android:textSize="12sp" />
         </RelativeLayout>
 
-        <!-- Controles de reproducción -->
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="?attr/selectableItemBackground"> <!-- Para efecto de clic -->
+    android:background="?attr/selectableItemBackground">
 
     <TextView
         android:id="@+id/folderNameTextView"

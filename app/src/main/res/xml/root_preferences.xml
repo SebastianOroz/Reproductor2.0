@@ -30,7 +30,7 @@
         <Preference
             android:key="pref_about"
             android:title="Acerca de"
-            android:summary="Sebastian Orozco Orejuela" />
+            android:summary="Hecho por Sebastian Orozco Orejuela" />
     </PreferenceCategory>
 
 </PreferenceScreen>

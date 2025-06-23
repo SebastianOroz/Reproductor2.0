@@ -37,7 +37,7 @@ import java.util.List;
 
 public class YouTubeFragment extends Fragment {
 
-    // --- ¡IMPORTANTE! REEMPLAZA ESTO CON TU PROPIA CLAVE DE API ---
+
     private static final String YOUTUBE_API_KEY = "AIzaSyB2KdO1OBqyJ48URVyPZcCJab6naVW69-w";
 
 
@@ -152,12 +152,12 @@ public class YouTubeFragment extends Fragment {
                     }
                 },
                 error -> {
-                    // *** ESTA ES LA SECCIÓN MEJORADA PARA DEPURACIÓN ***
+
                     progressBar.setVisibility(View.GONE);
                     String errorMessage = "Error en la petición: ";
                     NetworkResponse response = error.networkResponse;
                     if (response != null && response.data != null) {
-                        // Intenta obtener el mensaje de error detallado de la respuesta de Google
+
                         String jsonError = new String(response.data);
                         errorMessage += response.statusCode + " " + jsonError;
                     } else {
